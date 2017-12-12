@@ -1,0 +1,60 @@
+version: "2.1"
+
+services:
+    proxy:
+        image: traefik:1.3-alpine
+        networks:
+            shared:
+            private:
+        volumes:
+            - acme:/etc/traefik/acme:rw,Z
+        ports:
+            - "80:80"
+            - "443:443"
+        depends_on:
+            - dockersocket
+        restart: unless-stopped
+        privileged: true
+        tty: true
+        command:
+            - --ACME.ACMELogging
+            - --ACME.Email=you@example.com
+            - --ACME.EntryPoint=https
+            - --ACME.OnHostRule
+            - --ACME.Storage=/etc/traefik/acme/acme.json
+            - --DefaultEntryPoints=http,https
+            - --EntryPoints=Name:http Address::80 Redirect.EntryPoint:https
+            - --EntryPoints=Name:https Address::443 TLS
+            - --LogLevel=INFO
+            - --Docker
+            - --Docker.EndPoint=http://dockersocket:2375
+            - --Docker.ExposedByDefault=false
+            - --Docker.Watch
+
+    dockersocket:
+        image: tecnativa/docker-socket-proxy
+        privileged: true
+        networks:
+            private:
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+        environment:
+            CONTAINERS: 1
+            NETWORKS: 1
+            SERVICES: 1
+            SWARM: 1
+            TASKS: 1
+        restart: unless-stopped
+
+networks:
+    shared:
+        driver_opts:
+            encrypted: 1
+
+    private:
+        driver_opts:
+            encrypted: 1
+
+volumes:
+    acme:
+

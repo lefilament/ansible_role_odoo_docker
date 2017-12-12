@@ -1,0 +1,116 @@
+---
+
+- name: Add Docker GPG key to APT
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+
+- name: Add Docker repo to APT repositories
+  apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu/ xenial stable
+
+- name: Remove old Docker packages if present
+  apt: 
+    name: "{{ item }}"
+    state: absent
+    autoremove: yes
+  with_items:
+  - docker
+  - docker-engine
+  - docker.io
+
+- name: Install OS packages
+  apt: 
+    name: "{{ item }}"
+    state: latest
+    update_cache: yes
+    force: yes
+  with_items:
+  - git 
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - software-properties-common
+  - docker-ce 
+  - python-pip
+
+- name: Install PythonPy
+  pip:
+    name: "{{ item }}"
+  with_items:
+  - docker
+  - docker-compose
+
+- name: Install docker compose
+  get_url:
+    url: https://github.com/docker/compose/releases/download/1.17.1/docker-compose-Linux-x86_64
+    dest: /usr/local/bin/docker-compose
+    mode: 0555
+    checksum: sha256:db0a7b79d195dc021461d5628a8d53eeb2e556d2548b764770fccabb0a319dd8 
+
+- name: Create docker repo
+  file:
+    name: /home/docker
+    state: directory
+    owner: root
+    group: root
+
+- name: Install proxy docker
+  template:
+    src: inverseproxy.yaml.j2
+    dest: /home/docker/inverseproxy.yaml
+    owner: root
+    group: root
+    mode: 0644 
+
+- name: start proxy docker
+  docker_service:
+    project_src: /home/docker/
+    files: inverseproxy.yaml
+    project_name: inverseproxy
+
+- name: Install Odoo-base docker from Tecnativa
+  git: 
+    repo: https://github.com/Tecnativa/docker-odoo-base.git
+    version: scaffolding
+    dest: /home/docker/odoo
+
+- name: set rights on new folder
+  file:
+    name: /home/docker/odoo
+    state: directory
+    recurse: yes
+    owner: root 
+    group: root
+
+- name: set environment variables from template
+  template:
+    src: env.j2
+    dest: /home/docker/odoo/.env
+    owner: root
+    group: root
+    mode: 0644 
+  tags: docker_config
+
+- name: set repos variables from template
+  template:
+    src: repos.yaml.j2
+    dest: /home/docker/odoo/odoo/custom/src/repos.yaml
+    owner: root
+    group: root
+    mode: 0644 
+  tags: docker_config
+
+- name: set addons variables from template
+  template:
+    src: addons.yaml.j2
+    dest: /home/docker/odoo/odoo/custom/src/addons.yaml
+    owner: root
+    group: root
+    mode: 0644 
+  tags: docker_config
+
+- name: start odoo docker
+  docker_service:
+    project_src: /home/docker/odoo/
+    files: prod.yaml
+    build: yes

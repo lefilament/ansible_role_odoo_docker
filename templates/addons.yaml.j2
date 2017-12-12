@@ -1,0 +1,8 @@
+{% for repo in OE_CUSTOM_OCA | default([]) %}
+# OCA repo {{ repo.repo }} 
+{{ repo.repo }}:
+{% for modules in repo.modules %}
+    -  {{ modules }}
+{% endfor %}
+
+{% endfor %}
