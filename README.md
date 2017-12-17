@@ -1,4 +1,4 @@
-# Ansible role to deploy Odoo server docker from Tecnativa
+# Ansible role to deploy Odoo server docker from [Tecnativa](https://github.com/Tecnativa/docker-odoo-base)
 
 [![](https://img.shields.io/badge/licence-AGPL--3-blue.svg)](http://www.gnu.org/licenses/agpl "License: AGPL-3")
 
