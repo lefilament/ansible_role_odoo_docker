@@ -1,0 +1,34 @@
+version: "2.1"
+services:
+    backup_odoo:
+        image: tecnativa/duplicity:postgres
+        hostname: backup-odoo
+        domainname: "{{ odoo_url }}"
+        environment:
+            DST: "file:///backups/"
+            PASSPHRASE: "{{ odoo_master_pass }}"
+            PGDATABASE: "{{ odoo_db }}"
+            PGPASSWORD: "{{ odoo_db_pass }}"
+            PGUSER: "{{ odoo_db_user }}"
+            JOB_300_WHAT: "backup --full-if-older-than 1W"
+            JOB_301_WHAT: "dup remove-all-inc-of-but-n-full 1 --force $$DST $$@"
+            JOB_301_WHEN: "daily"
+            JOB_302_WHAT: "dup remove-all-but-n-full 4 --force $$DST $$@"
+            JOB_302_WHEN: "daily"
+        volumes:
+            - odoo_filestore:/mnt/backup/src/odoo:z
+            - ./odoo:/backups
+        networks:
+            - odoo_default
+        command:
+            - /etc/periodic/daily/jobrunner
+
+networks:
+    odoo_default:
+        driver_opts:
+            encrypted: 1
+        external: true
+
+volumes:
+    odoo_filestore:
+        external: true

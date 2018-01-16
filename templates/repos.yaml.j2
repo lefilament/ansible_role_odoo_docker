@@ -16,9 +16,9 @@
         # Example of a merge of the PR with the number <PR>
         # - oca refs/pull/<PR>/head
 
-{% for repo in OE_CUSTOM_OCA | default([])%}
+{% for repo in odoo_custom_modules_oca | default([])%}
 # OCA repo {{ repo.repo }} 
-./private/{{ repo.repo }}:
+./{{ repo.repo }}:
     defaults:
         depth: $DEPTH_DEFAULT
     remotes:
@@ -29,7 +29,7 @@
         - oca $ODOO_VERSION
 
 {% endfor %}
-{% for repo in OE_CUSTOM | default([]) %}
+{% for repo in odoo_custom_modules | default([]) %}
 # Le Filament repo {{ repo }} 
 ./private/{{ repo }}:
     defaults:

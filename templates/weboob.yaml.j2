@@ -1,0 +1,13 @@
+version: "2.1"
+services:
+    weboob:
+        build:
+            context: .
+            dockerfile: Dockerfile-weboob
+        image: weboob
+        volumes:
+            - weboob:/ofx
+        command: [sh, -c, '/root/bin/boobank list']
+
+volumes:
+    weboob:

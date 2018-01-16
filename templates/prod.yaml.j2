@@ -1,0 +1,97 @@
+version: "2.1"
+services:
+    odoo:
+        build:
+            context: ./odoo
+            args:
+                CONFIG_BUILD: "false"
+        image: filament/odoo
+        environment:
+            ADMIN_PASSWORD: "{{ odoo_master_pass }}"
+            PGPASSWORD: "{{ odoo_db_pass }}"
+            PGUSER: "{{ odoo_db_user }}"
+            PROXY_MODE: "true"
+            PYTHONOPTIMIZE: 2
+            PGDATABASE: "{{ odoo_db }}"
+        depends_on:
+            - db
+            - smtp
+            - inbox
+        tty: true
+        volumes:
+            - filestore:/var/lib/odoo:z
+{% if banking is defined %}
+            - bank_weboob:/ofx/:ro
+{% endif %}
+        networks:
+            default:
+            inverseproxy_shared:
+        restart: unless-stopped
+        labels:
+            traefik.docker.network: "inverseproxy_shared"
+            traefik.enable: "true"
+            traefik.frontend.passHostHeader: "true"
+            traefik.longpolling.port: "8072"
+            traefik.port: "8069"
+            traefik.dbmanager.frontend.auth.basic:
+                "{{ odoo_db_user }}:{{ PROXY_BCRYPT }}"
+            traefik.dbmanager.frontend.rule:
+                "Host:{{ odoo_url }};PathPrefix:/web/database/"
+            traefik.dbselector.frontend.rule:
+                "Host:{{ odoo_url }};PathPrefix:/web/database/{p:selector|list}"
+            traefik.longpolling.frontend.rule:
+                "Host:{{ odoo_url }};PathPrefix:/longpolling/"
+            traefik.websiteinfo.frontend.auth.basic:
+                "{{ odoo_db_user }}:{{ PROXY_BCRYPT }}"
+            traefik.websiteinfo.frontend.rule:
+                "Host:{{ odoo_url }};Path:/website/info"
+            traefik.www.frontend.rule: "Host:{{ odoo_url }}"
+        command:
+            - odoo
+            - --workers=3
+
+    db:
+        image: postgres:9.6-alpine
+        environment:
+            POSTGRES_USER: "{{ odoo_db_user }}"
+            POSTGRES_PASSWORD: "{{ odoo_db_pass }}"
+        volumes:
+            - db:/var/lib/postgresql/data:z
+        restart: unless-stopped
+
+    smtp:
+        image: tecnativa/postfix-relay
+        volumes:
+            - smtp:/var/spool/postfix
+        environment:
+            MAILNAME: "{{ mailname }}"
+            MAIL_RELAY_HOST: "{{ mailserver }}"
+            MAIL_RELAY_PORT: "{{ smtpport }}"
+            MAIL_RELAY_USER: "{{ smtpuser }}"
+            MAIL_RELAY_PASS: "{{ smtppass }}"
+            MAIL_CANONICAL_DOMAINS: "{{ mailname }}"
+            MAIL_NON_CANONICAL_DEFAULT: "{{ mailname }}"
+        restart: unless-stopped
+
+    inbox:
+        image: tecnativa/tcp-proxy
+        environment:
+            LISTEN: ":100"
+            TALK: "{{ mailserver }}:993"
+        restart: unless-stopped
+
+networks:
+    default:
+        driver_opts:
+            encrypted: 1
+    inverseproxy_shared:
+        external: true
+
+volumes:
+    filestore:
+    db:
+    smtp:
+{% if banking is defined %}
+    bank_weboob:
+        external: true
+{% endif %}

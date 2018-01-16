@@ -1,0 +1,29 @@
+version: "2.1"
+services:
+    restore_test:
+        image: tecnativa/duplicity:postgres
+        hostname: backup-odoo
+        domainname: "docker.le-filament.com"
+        environment:
+            DST: "file:///backups/"
+            PASSPHRASE: "{{ odoo_master_pass }}"
+            PGDATABASE: "{{ odoo_db_test }}"
+            PGPASSWORD: "{{ odoo_db_pass }}"
+            PGUSER: "{{ odoo_db_user }}"
+            OPTIONS: "--force"
+        volumes:
+            - odootest_filestore:/mnt/backup/src/odoo:z
+            - ./odoo:/backups
+        networks:
+            - odootest_default
+        command: [sh, -c, "restore && mv /mnt/backup/src/odoo/filestore/{{ odoo_db }} /mnt/backup/src/odoo/filestore/$$PGDATABASE && createdb -T template0 $$PGDATABASE && pg_restore -d $$PGDATABASE $$SRC/{{ odoo_db }}.pgdump"]
+
+networks:
+    odootest_default:
+        driver_opts:
+            encrypted: 1
+        external: true
+
+volumes:
+    odootest_filestore:
+        external: true

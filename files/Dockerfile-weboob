@@ -1,0 +1,22 @@
+FROM alpine
+
+RUN apk -U upgrade \
+    && apk add -t build-dependencies git build-base g++ gcc python-dev libffi-dev libxml2-dev libxslt-dev yaml-dev tiff-dev jpeg-dev zlib-dev \
+    && apk add python libffi libxml2 libxslt yaml tiff jpeg zlib wget su-exec bash gnupg \
+    && cd /tmp \
+    && wget https://bootstrap.pypa.io/get-pip.py \
+    && python ./get-pip.py \
+    && pip install -U setuptools \
+    && pip install html2text simplejson BeautifulSoup PyExecJS prettytable cssselect html2text python-dateutil urllib3 requests pyaml lxml unidecode Pillow \
+    && git clone https://git.weboob.org/weboob/stable.git /tmp/weboob \
+    && cd /tmp/weboob \
+    && ./tools/local_install.sh /root/bin \
+    && mkdir -p /root/.config/weboob \
+    && apk del build-dependencies \
+    && rm -rf /var/cache/apk/* /tmp/* /root/.gnupg /root/.cache/
+
+COPY backends /root/.config/weboob/backends
+
+RUN chmod 400 /root/.config/weboob/backends
+
+CMD /root/bin/boobank list

@@ -1,0 +1,29 @@
+[{{ bank }}]
+_module = {{ bank }}
+{% if bank_website is defined %}
+website = {{ bank_website }}
+{% endif %}
+{% if bank_authtype is defined %}
+auth_type = {{ bank_authtype }}
+{% endif %}
+login = {{ bank_login }}
+password = {{ bank_pass }}
+{% if bank_userid is defined %}
+nuser = {{ bank_userid }}
+{% endif %}
+
+{% if bank2 is defined %}
+[{{ bank2 }}]
+_module = {{ bank2 }}
+{% if bank2_website is defined %}
+website = {{ bank2_website }}
+{% endif %}
+{% if bank2_authtype is defined %}
+auth_type = {{ bank2_authtype }}
+{% endif %}
+login = {{ bank2_login }}
+password = {{ bank2_pass }}
+{% if bank2_userid is defined %}
+nuser = {{ bank2_userid }}
+{% endif %}
+{% endif %}

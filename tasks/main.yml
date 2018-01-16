@@ -1,116 +1,258 @@
 ---
 
-- name: Add Docker GPG key to APT
-  apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
-
-- name: Add Docker repo to APT repositories
-  apt_repository:
-    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu/ xenial stable
-
-- name: Remove old Docker packages if present
-  apt: 
-    name: "{{ item }}"
-    state: absent
-    autoremove: yes
-  with_items:
-  - docker
-  - docker-engine
-  - docker.io
-
-- name: Install OS packages
-  apt: 
-    name: "{{ item }}"
-    state: latest
-    update_cache: yes
-    force: yes
-  with_items:
-  - git 
-  - apt-transport-https
-  - ca-certificates
-  - curl
-  - software-properties-common
-  - docker-ce 
-  - python-pip
-
-- name: Install PythonPy
-  pip:
-    name: "{{ item }}"
-  with_items:
-  - docker
-  - docker-compose
-
-- name: Install docker compose
-  get_url:
-    url: https://github.com/docker/compose/releases/download/1.17.1/docker-compose-Linux-x86_64
-    dest: /usr/local/bin/docker-compose
-    mode: 0555
-    checksum: sha256:db0a7b79d195dc021461d5628a8d53eeb2e556d2548b764770fccabb0a319dd8 
-
-- name: Create docker repo
+## Install Odoo prod docker
+- name: PROD create Odoo docker structure on server in /home/docker/odoo
   file:
-    name: /home/docker
+    name: "{{ item }}"
     state: directory
     owner: root
     group: root
-
-- name: Install proxy docker
-  template:
-    src: inverseproxy.yaml.j2
-    dest: /home/docker/inverseproxy.yaml
-    owner: root
-    group: root
-    mode: 0644 
-
-- name: start proxy docker
-  docker_service:
-    project_src: /home/docker/
-    files: inverseproxy.yaml
-    project_name: inverseproxy
-
-- name: Install Odoo-base docker from Tecnativa
-  git: 
-    repo: https://github.com/Tecnativa/docker-odoo-base.git
-    version: scaffolding
-    dest: /home/docker/odoo
-
-- name: set rights on new folder
+  with_items:
+  - /home/docker/odoo/odoo/custom/dependencies
+  - /home/docker/odoo/odoo/custom/src/
+  tags: odoo_prod
+  
+- name: PROD create link for src towards custom src
   file:
-    name: /home/docker/odoo
-    state: directory
-    recurse: yes
-    owner: root 
-    group: root
-
-- name: set environment variables from template
+    name: "/home/docker/odoo/src"
+    state: link
+    src: "/home/docker/odoo/odoo/custom/src"
+  tags: odoo_prod
+  
+- name: PROD copy prod docker compose service
   template:
-    src: env.j2
-    dest: /home/docker/odoo/.env
+    src: prod.yaml.j2
+    dest: /home/docker/odoo/docker-compose.yml
+    owner: root
+    group: root
+    mode: 0400 
+  tags: odoo_prod
+  
+- name: PROD copy call for Tecnativa docker image 
+  copy:
+    src: Dockerfile-odoo
+    dest: "/home/docker/odoo/odoo/Dockerfile"
     owner: root
     group: root
     mode: 0644 
-  tags: docker_config
-
-- name: set repos variables from template
+  tags: odoo_prod
+  
+- name: PROD set repos variables from template
   template:
     src: repos.yaml.j2
-    dest: /home/docker/odoo/odoo/custom/src/repos.yaml
+    dest: "/home/docker/odoo/odoo/custom/src/repos.yaml"
     owner: root
     group: root
     mode: 0644 
-  tags: docker_config
+  notify: rebuild odoo docker prod
+  tags: odoo_prod
 
-- name: set addons variables from template
+- name: PROD set addons variables from template
   template:
     src: addons.yaml.j2
-    dest: /home/docker/odoo/odoo/custom/src/addons.yaml
+    dest: "/home/docker/odoo/odoo/custom/src/addons.yaml"
     owner: root
     group: root
     mode: 0644 
-  tags: docker_config
+  notify: rebuild odoo docker prod
+  tags: odoo_prod
 
-- name: start odoo docker
+- name: PROD copy pip extra requirements file
+  copy:
+    src: pip.txt
+    dest: "/home/docker/odoo/odoo/custom/dependencies/pip.txt"
+    owner: root
+    group: root
+    mode: 0644 
+  notify: rebuild odoo docker prod
+  tags: odoo_prod
+
+# Banking section
+- name: PROD create bank repo
+  file:
+    name: /home/docker/odoo/bank
+    state: directory
+    owner: root
+    group: root
+  when: banking is defined
+  tags: odoo_prod, bank
+
+- name: PROD copy template file for bank backends
+  template:
+    src: backends.j2
+    dest: /home/docker/odoo/bank/backends
+    owner: root
+    group: root
+    mode: 0400
+  when: banking is defined
+  tags: odoo_prod, bank
+
+- name: PROD copy weboob docker
+  copy:
+    src: Dockerfile-weboob
+    dest: /home/docker/odoo/bank/Dockerfile-weboob
+    owner: root
+    group: root
+    mode: 0644
+  when: banking is defined
+  tags: odoo_prod, bank
+
+- name: PROD copy weboob docker compose file
+  template:
+    src: weboob.yaml.j2
+    dest: /home/docker/odoo/bank/weboob.yaml
+    owner: root
+    group: root
+    mode: 0644
+  when: banking is defined
+  tags: odoo_prod, bank
+
+- name: PROD build odoo bank docker
+  docker_service:
+     project_src: /home/docker/odoo/bank
+     files: weboob.yaml
+     build: yes
+  when: banking is defined
+  tags: odoo_prod, bank
+
+- name: PROD add cron job to get bank account every day
+  cron: 
+    name: import bank moves
+    minute: 30
+    hour: 20
+    job: DATE=`date -d "last-week" +\%Y-\%m-\%d` && /usr/local/bin/docker-compose -f /home/docker/odoo/bank/weboob.yaml run --rm weboob sh -c "/root/bin/boobank history {{ bank_account }} $DATE -f ofx > /ofx/bank_account_import.ofx && chmod 444 /ofx/bank_account_import.ofx"
+  when: banking is defined
+  tags: odoo_prod, bank
+
+- name: PROD add cron job to get bank account 2 every day
+  cron: 
+    name: import bank moves account 2
+    minute: 50
+    hour: 20
+    job: DATE=`date -d "last-week" +\%Y-\%m-\%d` && /usr/local/bin/docker-compose -f /home/docker/odoo/bank/weboob.yaml run --rm weboob sh -c "/root/bin/boobank history {{ bank_account2 }} $DATE -f ofx > /ofx/bank_account2_import.ofx && chmod 444 /ofx/bank_account2_import.ofx"
+  when: banking is defined and bank_account2 is defined
+  tags: odoo_prod, bank
+
+- name: PROD add cron job to get bank 2 account every day
+  cron: 
+    name: import bank 2 moves
+    minute: 25
+    hour: 20
+    job: DATE=`date -d "last-week" +\%Y-\%m-\%d` && /usr/local/bin/docker-compose -f /home/docker/odoo/bank/weboob.yaml run --rm weboob sh -c "/root/bin/boobank history {{ bank2_account }} $DATE -f ofx > /ofx/bank2_account_import.ofx && chmod 444 /ofx/bank2_account_import.ofx"
+  when: banking is defined and bank2_account is defined
+  tags: odoo_prod, bank
+
+- name: PROD add cron job to get bank 2 account 2 every day
+  cron: 
+    name: import bank 2 moves account 2
+    minute: 45
+    hour: 20
+    job: DATE=`date -d "last-week" +\%Y-\%m-\%d` && /usr/local/bin/docker-compose -f /home/docker/odoo/bank/weboob.yaml run --rm weboob sh -c "/root/bin/boobank history {{ bank2_account2 }} $DATE -f ofx > /ofx/bank2_account2_import.ofx && chmod 444 /ofx/bank2_account2_import.ofx"
+  when: banking is defined and bank2_account2 is defined
+  tags: odoo_prod, bank
+
+# Start Odoo PROD docker
+- name: PROD start odoo docker prod
   docker_service:
     project_src: /home/docker/odoo/
-    files: prod.yaml
-    build: yes
+    recreate: never 
+  tags: start_docker, odoo_prod
+
+- name: PROD copy docker compose for backups
+  template:
+    src: backup.yaml.j2
+    dest: "/home/docker/backups/backup-odoo.yaml"
+    owner: root
+    group: root
+    mode: 0400
+  tags: odoo_prod
+
+- name: PROD add cron job to run backup every day
+  cron:
+    name: backup odoo
+    minute: 03
+    hour: 2
+    job: mount /home/docker/backups/odoo && /usr/local/bin/docker-compose -f /home/docker/backups/backup-odoo.yaml run --rm backup_odoo && umount /home/docker/backups/odoo
+  tags: odoo_prod
+
+## Install Odoo docker test
+- name: TEST create Odoo docker structure on server in /home/docker/odootest
+  file:
+    name: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+  with_items:
+  - /home/docker/odootest/odoo/custom/dependencies
+  - /home/docker/odootest/odoo/custom/src/
+  tags: odoo_test
+
+- name: TEST create link for src towards custom src
+  file:
+    name: "/home/docker/odootest/src"
+    state: link
+    src: "/home/docker/odootest/odoo/custom/src"
+  tags: odoo_test
+
+- name: TEST copy test docker compose service
+  template:
+    src: test.yaml.j2
+    dest: /home/docker/odootest/docker-compose.yml
+    owner: root
+    group: root
+    mode: 0400
+  tags: odoo_test
+  
+- name: TEST copy call for Tecnativa docker image 
+  copy:
+    src: Dockerfile-odoo
+    dest: "/home/docker/odootest/odoo/Dockerfile"
+    owner: root
+    group: root
+    mode: 0644 
+  tags: odoo_test
+
+- name: TEST set repos variables from template
+  template:
+    src: repos.yaml.j2
+    dest: "/home/docker/odootest/odoo/custom/src/repos.yaml"
+    owner: root
+    group: root
+    mode: 0644 
+  notify: rebuild odoo docker test
+  tags: odoo_test
+
+- name: TEST set addons variables from template
+  template:
+    src: addons.yaml.j2
+    dest: "/home/docker/odootest/odoo/custom/src/addons.yaml"
+    owner: root
+    group: root
+    mode: 0644
+  notify: rebuild odoo docker test
+  tags: odoo_test
+
+- name: TEST copy pip extra requirements file
+  copy:
+    src: pip.txt
+    dest: "/home/docker/odootest/odoo/custom/dependencies/pip.txt"
+    owner: root
+    group: root
+    mode: 0644
+  notify: rebuild odoo docker test
+  tags: odoo_test
+
+- name: TEST start odoo docker test
+  docker_service:
+    project_src: /home/docker/odootest/
+    recreate: never 
+  tags: start_docker, odoo_test
+
+- name: TEST copy compose file to restore db from prod
+  template:
+    src: restore-odootest.yaml.j2
+    dest: /home/docker/backups/restore-odootest.yaml
+    owner: root
+    group: root
+    mode: 0400
+  tags: odoo_test

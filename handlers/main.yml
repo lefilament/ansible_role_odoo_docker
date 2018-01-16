@@ -1,0 +1,17 @@
+---
+
+- name: rebuild odoo docker prod
+  docker_service:
+    project_src: /home/docker/odoo/ 
+    build: yes
+    nocache: yes
+    pull: no
+    restarted: yes
+
+- name: rebuild odoo docker test
+  docker_service:
+    project_src: /home/docker/odootest/
+    build: yes
+    nocache: yes
+    pull: no
+    restarted: yes

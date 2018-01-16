@@ -1,4 +1,4 @@
-{% for repo in OE_CUSTOM_OCA | default([]) %}
+{% for repo in odoo_custom_modules_oca | default([]) %}
 # OCA repo {{ repo.repo }} 
 {{ repo.repo }}:
 {% for modules in repo.modules %}
