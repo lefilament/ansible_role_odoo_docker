@@ -1,10 +1,6 @@
 version: "2.1"
 services:
     odoo:
-        build:
-            context: ./odoo
-            args:
-                CONFIG_BUILD: "false"
         image: filament/odoo
         environment:
             ADMIN_PASSWORD: "{{ odoo_master_pass }}"
