@@ -38,26 +38,6 @@
     mode: 0644 
   tags: odoo_test
 
-- name: TEST set script in build to create lf_theme less file if necessary
-  copy:
-    src: 105-theme
-    dest: "/home/docker/odootest/odoo/custom/build.d/105-theme"
-    owner: root
-    group: root
-    mode: 0750
-  notify: rebuild odoo docker test
-  tags: odoo_test
-  
-- name: TEST set script in build to change owner of files to odoo iso root
-  copy:
-    src: 805-chown
-    dest: "/home/docker/odootest/odoo/custom/build.d/805-chown"
-    owner: root
-    group: root
-    mode: 0750
-  notify: rebuild odoo docker test
-  tags: odoo_test
-
 - name: TEST set repos variables from template
   template:
     src: repos.yaml.j2
