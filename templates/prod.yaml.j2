@@ -17,11 +17,14 @@ services:
         volumes:
             - filestore:/var/lib/odoo:z
 {% if banking is defined %}
-            - bank_weboob:/ofx/:ro
+            - ./bank/:/ofx/:ro
 {% endif %}
         networks:
             default:
             inverseproxy_shared:
+{% if inventory_hostname in groups['docker_auth'] %}
+            auth_default:
+{% endif %}
         restart: unless-stopped
         labels:
             traefik.docker.network: "inverseproxy_shared"
@@ -56,6 +59,7 @@ services:
         restart: unless-stopped
 
     smtp:
+{% if mailname is defined %}
         image: tecnativa/postfix-relay
         volumes:
             - smtp:/var/spool/postfix
@@ -67,13 +71,20 @@ services:
             MAIL_RELAY_PASS: "{{ smtppass }}"
             MAIL_CANONICAL_DOMAINS: "{{ mailname }}"
             MAIL_NON_CANONICAL_DEFAULT: "{{ mailname }}"
+{% else %}
+        image: tecnativa/smtp-sink
+{% endif %}
         restart: unless-stopped
 
     inbox:
         image: tecnativa/tcp-proxy
         environment:
             LISTEN: ":100"
+{% if mailname is defined %}
             TALK: "{{ mailserver }}:993"
+{% else %}
+            TALK: "localhost:993"
+{% endif %}
         restart: unless-stopped
 
 networks:
@@ -82,12 +93,12 @@ networks:
             encrypted: 1
     inverseproxy_shared:
         external: true
+{% if inventory_hostname in groups['docker_auth'] %}
+    auth_default:
+        external: true
+{% endif %}
 
 volumes:
     filestore:
     db:
     smtp:
-{% if banking is defined %}
-    bank_weboob:
-        external: true
-{% endif %}
