@@ -4,3 +4,4 @@ unidecode
 requests
 xlsxwriter
 simplejson
+wtforms
