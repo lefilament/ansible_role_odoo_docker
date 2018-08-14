@@ -128,7 +128,14 @@ bank2_account:
 bank2_account2: 
 ```
 
+# Procedure to restore Odoo from backup
 
+In order to restore Owncloud database and files from backup, it is necessary to first delete the database (from Odoo interface URL/web/database/manager) then change directory to /home/docker/backups and run the following command:
+```docker-compose -f backup-odoo.yaml run --rm backup_odoo sh -c "restore --force && createdb -T template0 \$PGDATABASE && pg_restore -d \$PGDATABASE \$SRC/\$PGDATABASE.pgdump"```
+
+
+You can also copy production database inside test one, first delete the database from test instance (from Odoo test interface URL/web/database/manager) then change directory to /home/docker/backups and run the following command:
+```docker-compose -f restore-odootest.yaml run --rm restore_test```
 
 
 # Credits
