@@ -115,7 +115,41 @@
     mode: 0400
   tags: odoo_prod
 
+#--------------------------------------------------
 # Banking section
+#--------------------------------------------------
+
+- name: Clone Weboob GIT repo
+  git: repo="https://git.weboob.org/weboob/devel.git" dest="/root/weboob"
+  when: banking is defined
+  register: weboob
+  tags: bank
+
+- name: Install necessary python modules
+  pip:  name="{{ item }}"
+  with_items:
+    - prettytable
+    - cssselect
+    - html2text
+    - unidecode
+    - python-dateutil
+    - lxml
+    - Pillow
+  when: banking is defined
+  tags: bank
+
+- name: Create Config directory
+  file:
+    name: /root/.config/weboob
+    state: directory
+  when: banking is defined
+  tags: bank
+
+- name: Copy configuration file
+  template: src=backends.j2 dest=/root/.config/weboob/backends mode=0400
+  when: banking is defined
+  tags: bank
+
 - name: PROD create bank repo
   file:
     name: /home/docker/odoo/bank
@@ -125,52 +159,12 @@
   when: banking is defined
   tags: odoo_prod, bank
 
-- name: PROD copy template file for bank backends
-  template:
-    src: backends.j2
-    dest: /home/docker/odoo/bank/backends
-    owner: root
-    group: root
-    mode: 0400
-  when: banking is defined
-  tags: odoo_prod, bank
-
-- name: PROD copy weboob docker
-  copy:
-    src: Dockerfile-weboob
-    dest: /home/docker/odoo/bank/Dockerfile-weboob
-    owner: root
-    group: root
-    mode: 0644
-  when: banking is defined
-  tags: odoo_prod, bank
-
-- name: PROD copy weboob docker compose file
-  template:
-    src: weboob.yaml.j2
-    dest: /home/docker/odoo/bank/weboob.yaml
-    owner: root
-    group: root
-    mode: 0644
-  when: banking is defined
-  tags: odoo_prod, bank
-
-- name: PROD build odoo bank docker
-  docker_service:
-     project_src: /home/docker/odoo/bank
-     files: weboob.yaml
-     build: yes
-  async: 120
-  poll: 10
-  when: banking is defined
-  tags: odoo_prod, bank
-
 - name: PROD add cron job to get bank account every day
   cron:
     name: import bank moves
     minute: 30
     hour: 20
-    job: DATE=`date -d "last-week" +\%Y-\%m-\%d` && /usr/local/bin/docker-compose -f /home/docker/odoo/bank/weboob.yaml run --rm weboob sh -c "/root/bin/boobank history {{ bank_account }} $DATE -f ofx > /ofx/bank_account_import.ofx && chmod 444 /ofx/bank_account_import.ofx"
+    job: /root/weboob/tools/local_run.sh boobank history {{ bank_account }} `date -d "last week" +\%Y-\%m-\%d` -f ofx > /home/docker/odoo/bank/bank_account_import.ofx ; chmod 444 /home/docker/odoo/bank/bank_account_import.ofx
   when: banking is defined
   tags: odoo_prod, bank
 
@@ -179,7 +173,7 @@
     name: import bank moves account 2
     minute: 50
     hour: 20
-    job: DATE=`date -d "last-week" +\%Y-\%m-\%d` && /usr/local/bin/docker-compose -f /home/docker/odoo/bank/weboob.yaml run --rm weboob sh -c "/root/bin/boobank history {{ bank_account2 }} $DATE -f ofx > /ofx/bank_account2_import.ofx && chmod 444 /ofx/bank_account2_import.ofx"
+    job: /root/weboob/tools/local_run.sh boobank history {{ bank_account2 }} `date -d "last week" +\%Y-\%m-\%d` -f ofx > /home/docker/odoo/bank/bank_account2_import.ofx ; chmod 444 /home/docker/odoo/bank/bank_account2_import.ofx
   when: banking is defined and bank_account2 is defined
   tags: odoo_prod, bank
 
@@ -188,7 +182,7 @@
     name: import bank 2 moves
     minute: 25
     hour: 20
-    job: DATE=`date -d "last-week" +\%Y-\%m-\%d` && /usr/local/bin/docker-compose -f /home/docker/odoo/bank/weboob.yaml run --rm weboob sh -c "/root/bin/boobank history {{ bank2_account }} $DATE -f ofx > /ofx/bank2_account_import.ofx && chmod 444 /ofx/bank2_account_import.ofx"
+    job: /root/weboob/tools/local_run.sh boobank history {{ bank2_account }} `date -d "last week" +\%Y-\%m-\%d` -f ofx > /home/docker/odoo/bank/bank2_account_import.ofx ; chmod 444 /home/docker/odoo/bank/bank2_account_import.ofx
   when: banking is defined and bank2_account is defined
   tags: odoo_prod, bank
 
@@ -197,9 +191,13 @@
     name: import bank 2 moves account 2
     minute: 45
     hour: 20
-    job: DATE=`date -d "last-week" +\%Y-\%m-\%d` && /usr/local/bin/docker-compose -f /home/docker/odoo/bank/weboob.yaml run --rm weboob sh -c "/root/bin/boobank history {{ bank2_account2 }} $DATE -f ofx > /ofx/bank2_account2_import.ofx && chmod 444 /ofx/bank2_account2_import.ofx"
+    job: /root/weboob/tools/local_run.sh boobank history {{ bank2_account2 }} `date -d "last week" +\%Y-\%m-\%d` -f ofx > /home/docker/odoo/bank/bank2_account2_import.ofx ; chmod 444 /home/docker/odoo/bank/bank2_account2_import.ofx
   when: banking is defined and bank2_account2 is defined
   tags: odoo_prod, bank
+
+#--------------------------------------------------
+# Backup section
+#--------------------------------------------------
 
 - name: PROD copy docker compose for backups
   template:
