@@ -23,6 +23,10 @@ services:
         networks:
             default:
             inverseproxy_shared:
+{% if inventory_hostname in groups['docker_auth'] %}
+            auth_default:
+{% endif %}
+        restart: unless-stopped
         labels:
             traefik.docker.network: "inverseproxy_shared"
             traefik.enable: "true"
@@ -54,17 +58,18 @@ services:
             POSTGRES_PASSWORD: "{{ odoo_db_pass }}"
         volumes:
             - db:/var/lib/postgresql/data:z
+        restart: unless-stopped
 
     smtp:
         image: tecnativa/smtp-sink
-
+        restart: unless-stopped
 
     inbox:
         image: tecnativa/tcp-proxy
         environment:
             LISTEN: ":100"
             TALK: "localhost:993"
-
+        restart: unless-stopped
 
 networks:
     default:
@@ -72,6 +77,10 @@ networks:
             encrypted: 1
     inverseproxy_shared:
         external: true
+{% if inventory_hostname in groups['docker_auth'] %}
+    auth_default:
+        external: true
+{% endif %}
 
 volumes:
     filestore:
