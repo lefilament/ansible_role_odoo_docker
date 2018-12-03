@@ -2,8 +2,11 @@ version: "2.1"
 services:
     odoo:
         image: filament/odoo
+        container_name: odoo
         environment:
             ADMIN_PASSWORD: "{{ odoo_master_pass }}"
+            INITIAL_LANG: "fr_FR"
+            ODOO_VERSION: "{{ odoo_version }}"
             PGPASSWORD: "{{ odoo_db_pass }}"
             PGUSER: "{{ odoo_db_user }}"
             PROXY_MODE: "true"
@@ -12,7 +15,6 @@ services:
         depends_on:
             - db
             - smtp
-            - inbox
         tty: true
         volumes:
             - filestore:/var/lib/odoo:z
@@ -22,8 +24,9 @@ services:
         networks:
             default:
             inverseproxy_shared:
-{% if inventory_hostname in groups['docker_auth'] %}
-            auth_default:
+            whitelists_proxy:
+{% if mailname is defined %}
+            email_proxy:
 {% endif %}
         restart: unless-stopped
         labels:
@@ -50,7 +53,8 @@ services:
             - --workers=3
 
     db:
-        image: postgres:9.6-alpine
+        image: postgres:{{ odoo_db_version }}-alpine
+        container_name: odoo_db
         environment:
             POSTGRES_USER: "{{ odoo_db_user }}"
             POSTGRES_PASSWORD: "{{ odoo_db_pass }}"
@@ -61,6 +65,9 @@ services:
     smtp:
 {% if mailname is defined %}
         image: tecnativa/postfix-relay
+        container_name: odoo_smtp
+        networks:
+            email_proxy:
         volumes:
             - smtp:/var/spool/postfix
         environment:
@@ -72,33 +79,52 @@ services:
             MAIL_CANONICAL_DOMAINS: "{{ mailname }}"
             MAIL_NON_CANONICAL_DEFAULT: "{{ mailname }}"
 {% else %}
-        image: tecnativa/smtp-sink
+        image: mailhog/mailhog
+        container_name: odoo_smtp
 {% endif %}
         restart: unless-stopped
 
-    inbox:
-        image: tecnativa/tcp-proxy
-        environment:
-            LISTEN: ":100"
 {% if mailname is defined %}
-            TALK: "{{ mailserver }}:993"
-{% else %}
-            TALK: "localhost:993"
-{% endif %}
+    email:
+        image: tecnativa/whitelist
+        container_name: odoo_email
+        networks:
+            email_proxy:
+                aliases:
+                    - "{{ mailserver }}"
+            email_public:
+        ports:
+            - "{{ smtpport }}:{{ smtpport }}"
+            - "993:993"
+        environment:
+            PORT: "443 {{ smtpport }} 993"
+            TARGET: "{{ mailserver }}"
+            PRE_RESOLVE: 1
         restart: unless-stopped
+{% endif %}
 
 networks:
     default:
+        internal: true
         driver_opts:
             encrypted: 1
     inverseproxy_shared:
         external: true
-{% if inventory_hostname in groups['docker_auth'] %}
-    auth_default:
+    whitelists_proxy:
         external: true
+{% if mailname is defined %}
+    email_proxy:
+        internal: true
+        driver_opts:
+            encrypted: 1
+    email_public:
+        driver_opts:
+            encrypted: 1
 {% endif %}
 
 volumes:
     filestore:
     db:
+{% if mailname is defined %}
     smtp:
+{% endif %}

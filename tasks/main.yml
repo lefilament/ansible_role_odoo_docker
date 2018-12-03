@@ -38,23 +38,16 @@
     mode: 0644 
   tags: odoo_test
 
-- name: TEST set repos variables from template
+- name: TEST set {{ item }}  variables from template
   template:
-    src: repos.yaml.j2
-    dest: "/home/docker/odootest/odoo/custom/src/repos.yaml"
+    src: "{{ item }}.j2"
+    dest: "/home/docker/odootest/odoo/custom/src/{{ item }}"
     owner: root
     group: root
     mode: 0644 
-  notify: rebuild odoo docker test
-  tags: odoo_test
-
-- name: TEST set addons variables from template
-  template:
-    src: addons.yaml.j2
-    dest: "/home/docker/odootest/odoo/custom/src/addons.yaml"
-    owner: root
-    group: root
-    mode: 0644
+  with_items:
+    - repos.yaml
+    - addons.yaml
   notify: rebuild odoo docker test
   tags: odoo_test
 
@@ -144,7 +137,7 @@
     name: import bank moves
     minute: 30
     hour: 20
-    job: /root/weboob/tools/local_run.sh boobank history {{ bank_account }} `date -d "last week" +\%Y-\%m-\%d` -f ofx > /home/docker/odoo/bank/bank_account_import.ofx ; chmod 444 /home/docker/odoo/bank/bank_account_import.ofx
+    job: /root/weboob/tools/local_run.sh boobank history {{ bank_account }} `date -d "last week" +\%Y-\%m-\%d` -f ofx | sed -n '/OFXHEADER/,$p' | sed 's/.*OFXHEADER/OFXHEADER/g' > /home/docker/odoo/bank/bank_account_import.ofx ; chmod 444 /home/docker/odoo/bank/bank_account_import.ofx
   when: banking is defined
   tags: odoo_prod, bank
 
@@ -153,7 +146,7 @@
     name: import bank moves account 2
     minute: 50
     hour: 20
-    job: /root/weboob/tools/local_run.sh boobank history {{ bank_account2 }} `date -d "last week" +\%Y-\%m-\%d` -f ofx > /home/docker/odoo/bank/bank_account2_import.ofx ; chmod 444 /home/docker/odoo/bank/bank_account2_import.ofx
+    job: /root/weboob/tools/local_run.sh boobank history {{ bank_account2 }} `date -d "last week" +\%Y-\%m-\%d` -f ofx | sed -n '/OFXHEADER/,$p' | sed 's/.*OFXHEADER/OFXHEADER/g' > /home/docker/odoo/bank/bank_account2_import.ofx ; chmod 444 /home/docker/odoo/bank/bank_account2_import.ofx
   when: banking is defined and bank_account2 is defined
   tags: odoo_prod, bank
 
@@ -162,7 +155,7 @@
     name: import bank 2 moves
     minute: 25
     hour: 20
-    job: /root/weboob/tools/local_run.sh boobank history {{ bank2_account }} `date -d "last week" +\%Y-\%m-\%d` -f ofx > /home/docker/odoo/bank/bank2_account_import.ofx ; chmod 444 /home/docker/odoo/bank/bank2_account_import.ofx
+    job: /root/weboob/tools/local_run.sh boobank history {{ bank2_account }} `date -d "last week" +\%Y-\%m-\%d` -f ofx | sed -n '/OFXHEADER/,$p' | sed 's/.*OFXHEADER/OFXHEADER/g' > /home/docker/odoo/bank/bank2_account_import.ofx ; chmod 444 /home/docker/odoo/bank/bank2_account_import.ofx
   when: banking is defined and bank2_account is defined
   tags: odoo_prod, bank
 
@@ -171,7 +164,7 @@
     name: import bank 2 moves account 2
     minute: 45
     hour: 20
-    job: /root/weboob/tools/local_run.sh boobank history {{ bank2_account2 }} `date -d "last week" +\%Y-\%m-\%d` -f ofx > /home/docker/odoo/bank/bank2_account2_import.ofx ; chmod 444 /home/docker/odoo/bank/bank2_account2_import.ofx
+    job: /root/weboob/tools/local_run.sh boobank history {{ bank2_account2 }} `date -d "last week" +\%Y-\%m-\%d` -f ofx | sed -n '/OFXHEADER/,$p' | sed 's/.*OFXHEADER/OFXHEADER/g' > /home/docker/odoo/bank/bank2_account2_import.ofx ; chmod 444 /home/docker/odoo/bank/bank2_account2_import.ofx
   when: banking is defined and bank2_account2 is defined
   tags: odoo_prod, bank
 
@@ -195,3 +188,18 @@
     hour: 2
     job: mount /home/docker/backups/odoo && /usr/local/bin/docker-compose -f /home/docker/backups/backup-odoo.yaml run --rm backup_odoo && umount /home/docker/backups/odoo
   tags: odoo_prod
+
+#--------------------------------------------------
+# Whitelists section
+#--------------------------------------------------
+
+- name: copy docker compose for whitelists
+  template:
+    src: whitelists.yaml.j2
+    dest: "/home/docker/whitelists.yaml"
+    owner: root
+    group: root
+    mode: 0400
+  notify: start odoo docker whitelists
+  when: inventory_hostname in groups['docker_secure']
+  tags: odoo_whitelists

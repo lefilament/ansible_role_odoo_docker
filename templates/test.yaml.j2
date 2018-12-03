@@ -6,26 +6,27 @@ services:
             args:
                 CONFIG_BUILD: "false"
         image: filament/odoo
+        container_name: testodoo
         environment:
             ADMIN_PASSWORD: "{{ odoo_master_pass }}"
+            INITIAL_LANG: "fr_FR"
+            ODOO_VERSION: "{{ odoo_version }}"
             PGPASSWORD: "{{ odoo_db_pass }}"
             PGUSER: "{{ odoo_db_user }}"
             PROXY_MODE: "true"
             PYTHONOPTIMIZE: 2
             PGDATABASE: "{{ odoo_db_test }}"
+            SMTP_PORT: "1025"
         depends_on:
             - db
             - smtp
-            - inbox
         tty: true
         volumes:
             - filestore:/var/lib/odoo:z
         networks:
             default:
             inverseproxy_shared:
-{% if inventory_hostname in groups['docker_auth'] %}
-            auth_default:
-{% endif %}
+            whitelists_proxy:
         restart: unless-stopped
         labels:
             traefik.docker.network: "inverseproxy_shared"
@@ -33,6 +34,8 @@ services:
             traefik.frontend.passHostHeader: "true"
             traefik.longpolling.port: "8072"
             traefik.port: "8069"
+            traefik.frontend.headers.customResponseHeaders:
+                "X-Robots-Tag:noindex, nofollow"
             traefik.dbmanager.frontend.auth.basic:
                 "{{ odoo_db_user }}:{{ PROXY_BCRYPT }}"
             traefik.dbmanager.frontend.rule:
@@ -52,7 +55,8 @@ services:
             - --max-cron-threads=0
 
     db:
-        image: postgres:9.6-alpine
+        image: postgres:{{ odoo_db_version }}-alpine
+        container_name: testodoo_db
         environment:
             POSTGRES_USER: "{{ odoo_db_user }}"
             POSTGRES_PASSWORD: "{{ odoo_db_pass }}"
@@ -61,26 +65,28 @@ services:
         restart: unless-stopped
 
     smtp:
-        image: tecnativa/smtp-sink
+        image: mailhog/mailhog
+        container_name: testodoo_smtp
         restart: unless-stopped
-
-    inbox:
-        image: tecnativa/tcp-proxy
-        environment:
-            LISTEN: ":100"
-            TALK: "localhost:993"
-        restart: unless-stopped
+        networks:
+            default:
+            inverseproxy_shared:
+        labels:
+            traefik.docker.network: "inverseproxy_shared"
+            traefik.enable: "true"
+            traefik.frontend.passHostHeader: "true"
+            traefik.port: "8025"
+            traefik.frontend.rule: "Host:{{ odoo_test_url }};PathPrefixStrip:/smtp/"
 
 networks:
     default:
+        internal: true
         driver_opts:
             encrypted: 1
     inverseproxy_shared:
         external: true
-{% if inventory_hostname in groups['docker_auth'] %}
-    auth_default:
+    whitelists_proxy:
         external: true
-{% endif %}
 
 volumes:
     filestore:

@@ -10,6 +10,7 @@ services:
             PGDATABASE: "{{ odoo_db }}"
             PGPASSWORD: "{{ odoo_db_pass }}"
             PGUSER: "{{ odoo_db_user }}"
+            JOB_200_WHAT: "pg_dump --no-owner --format c --file $$SRC/$$PGDATABASE.pgdump"
             JOB_300_WHAT: "backup --full-if-older-than 1W"
             JOB_301_WHAT: "dup remove-all-inc-of-but-n-full 1 --force $$DST $$@"
             JOB_301_WHEN: "daily"

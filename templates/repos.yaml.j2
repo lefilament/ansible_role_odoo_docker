@@ -1,34 +1,3 @@
-# Odoo is always required
-./odoo:
-    defaults:
-        # Shallow repositories ($DEPTH_DEFAULT=1) are faster & thinner
-        # You may need a bigger depth when merging PRs (use $DEPTH_MERGE
-        # for a sane value of 100 commits)
-        depth: $DEPTH_DEFAULT
-    remotes:
-        ocb: https://github.com/OCA/OCB.git
-        odoo: https://github.com/odoo/odoo.git
-        openupgrade: https://github.com/OCA/OpenUpgrade.git
-    target:
-        ocb $ODOO_VERSION
-    merges:
-        - ocb $ODOO_VERSION
-        # Example of a merge of the PR with the number <PR>
-        # - oca refs/pull/<PR>/head
-
-{% for repo in odoo_custom_modules_oca | default([])%}
-# OCA repo {{ repo.repo }} 
-./{{ repo.repo }}:
-    defaults:
-        depth: $DEPTH_DEFAULT
-    remotes:
-        oca: https://github.com/OCA/{{ repo.repo }}.git
-    target:
-        oca $ODOO_VERSION
-    merges:
-        - oca $ODOO_VERSION
-
-{% endfor %}
 {% for repo in odoo_custom_modules | default([]) %}
 # Le Filament repo {{ repo }} 
 ./private/{{ repo }}:
@@ -40,4 +9,17 @@
         lf $ODOO_VERSION
     merges:
         - lf $ODOO_VERSION
+{% endfor %}
+{% for repo in odoo_other_modules | default([]) %}
+# Other modules {{ repo.repo }}
+./{{ repo.repo }}:
+    defaults:
+        depth: $DEPTH_DEFAULT
+    remotes:
+        {{ repo.repo }}: {{ repo.url }}
+    target:
+        {{ repo.repo }} $ODOO_VERSION
+    merges:
+        - {{ repo.repo }} $ODOO_VERSION
+    
 {% endfor %}
