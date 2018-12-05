@@ -75,6 +75,13 @@ odoo_custom_modules_oca:
     modules:
      - mail_restrict_follower_selection
 
+## Other modules
+odoo_other_modules:
+ - repo: elico
+   url: https://github.com/Elico-Corp/odoo-addons.git
+   modules:
+     - auth_cas
+
 ## Custom modules
 # Where to retrieve them from - for bitbucket
 lf_bitbucket_name:
