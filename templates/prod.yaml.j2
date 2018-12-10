@@ -35,7 +35,7 @@ services:
             traefik.frontend.passHostHeader: "true"
             traefik.longpolling.port: "8072"
             traefik.port: "8069"
-            traefik.dbmanager.frontend.auth.basic:
+            traefik.dbmanager.frontend.auth.basic.users:
                 "{{ odoo_db_user }}:{{ PROXY_BCRYPT }}"
             traefik.dbmanager.frontend.rule:
                 "Host:{{ odoo_url }};PathPrefix:/web/database/"
@@ -43,7 +43,7 @@ services:
                 "Host:{{ odoo_url }};PathPrefix:/web/database/{p:selector|list}"
             traefik.longpolling.frontend.rule:
                 "Host:{{ odoo_url }};PathPrefix:/longpolling/"
-            traefik.websiteinfo.frontend.auth.basic:
+            traefik.websiteinfo.frontend.auth.basic.users:
                 "{{ odoo_db_user }}:{{ PROXY_BCRYPT }}"
             traefik.websiteinfo.frontend.rule:
                 "Host:{{ odoo_url }};Path:/website/info"
