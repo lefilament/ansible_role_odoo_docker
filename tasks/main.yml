@@ -30,8 +30,8 @@
   tags: odoo_test
   
 - name: TEST copy call for Tecnativa docker image 
-  copy:
-    src: Dockerfile-odoo
+  template:
+    src: Dockerfile-odoo.j2
     dest: "/home/docker/odootest/odoo/Dockerfile"
     owner: root
     group: root
