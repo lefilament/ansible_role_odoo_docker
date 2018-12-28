@@ -32,7 +32,6 @@ services:
             traefik.docker.network: "inverseproxy_shared"
             traefik.enable: "true"
             traefik.frontend.passHostHeader: "true"
-            traefik.longpolling.port: "8072"
             traefik.port: "8069"
             traefik.frontend.headers.customResponseHeaders:
                 "X-Robots-Tag:noindex, nofollow"
@@ -42,8 +41,6 @@ services:
                 "Host:{{ odoo_test_url }};PathPrefix:/web/database/"
             traefik.dbselector.frontend.rule:
                 "Host:{{ odoo_test_url }};PathPrefix:/web/database/{p:selector|list}"
-            traefik.longpolling.frontend.rule:
-                "Host:{{ odoo_test_url }};PathPrefix:/longpolling/"
             traefik.websiteinfo.frontend.auth.basic.users:
                 "{{ odoo_db_user }}:{{ PROXY_BCRYPT }}"
             traefik.websiteinfo.frontend.rule:
@@ -51,7 +48,6 @@ services:
             traefik.www.frontend.rule: "Host:{{ odoo_test_url }}"
         command:
             - odoo
-            - --workers=1
             - --max-cron-threads=0
 
     db:
