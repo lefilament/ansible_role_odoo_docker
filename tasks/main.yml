@@ -201,5 +201,4 @@
     group: root
     mode: 0400
   notify: start odoo docker whitelists
-  when: inventory_hostname in groups['docker_secure']
   tags: odoo_whitelists
