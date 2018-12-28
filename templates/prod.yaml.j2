@@ -3,21 +3,12 @@ services:
     odoo:
         image: filament/odoo
         container_name: odoo
-        environment:
-            ADMIN_PASSWORD: "{{ odoo_master_pass }}"
-            INITIAL_LANG: "fr_FR"
-            ODOO_VERSION: "{{ odoo_version }}"
-            PGPASSWORD: "{{ odoo_db_pass }}"
-            PGUSER: "{{ odoo_db_user }}"
-            PROXY_MODE: "true"
-            PYTHONOPTIMIZE: 2
-            PGDATABASE: "{{ odoo_db }}"
         depends_on:
             - db
             - smtp
         tty: true
         volumes:
-            - filestore:/var/lib/odoo:z
+            - filestore:/opt/odoo/data:z
 {% if banking is defined %}
             - ./bank/:/ofx/:ro
 {% endif %}
@@ -33,7 +24,6 @@ services:
             traefik.docker.network: "inverseproxy_shared"
             traefik.enable: "true"
             traefik.frontend.passHostHeader: "true"
-            traefik.longpolling.port: "8072"
             traefik.port: "8069"
             traefik.dbmanager.frontend.auth.basic.users:
                 "{{ odoo_db_user }}:{{ PROXY_BCRYPT }}"
@@ -41,16 +31,11 @@ services:
                 "Host:{{ odoo_url }};PathPrefix:/web/database/"
             traefik.dbselector.frontend.rule:
                 "Host:{{ odoo_url }};PathPrefix:/web/database/{p:selector|list}"
-            traefik.longpolling.frontend.rule:
-                "Host:{{ odoo_url }};PathPrefix:/longpolling/"
             traefik.websiteinfo.frontend.auth.basic.users:
                 "{{ odoo_db_user }}:{{ PROXY_BCRYPT }}"
             traefik.websiteinfo.frontend.rule:
                 "Host:{{ odoo_url }};Path:/website/info"
             traefik.www.frontend.rule: "Host:{{ odoo_url }}"
-        command:
-            - odoo
-            - --workers=3
 
     db:
         image: postgres:{{ odoo_db_version }}-alpine
@@ -78,13 +63,8 @@ services:
             MAIL_RELAY_PASS: "{{ smtppass }}"
             MAIL_CANONICAL_DOMAINS: "{{ mailname }}"
             MAIL_NON_CANONICAL_DEFAULT: "{{ mailname }}"
-{% else %}
-        image: mailhog/mailhog
-        container_name: odoo_smtp
-{% endif %}
         restart: unless-stopped
 
-{% if mailname is defined %}
     email:
         image: tecnativa/whitelist
         container_name: odoo_email
@@ -100,8 +80,11 @@ services:
             PORT: "443 {{ smtpport }} 993"
             TARGET: "{{ mailserver }}"
             PRE_RESOLVE: 1
-        restart: unless-stopped
+{% else %}
+        image: mailhog/mailhog
+        container_name: odoo_smtp
 {% endif %}
+        restart: unless-stopped
 
 networks:
     default:

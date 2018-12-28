@@ -3,26 +3,14 @@ services:
     odoo:
         build:
             context: ./odoo
-            args:
-                CONFIG_BUILD: "false"
         image: filament/odoo
         container_name: testodoo
-        environment:
-            ADMIN_PASSWORD: "{{ odoo_master_pass }}"
-            INITIAL_LANG: "fr_FR"
-            ODOO_VERSION: "{{ odoo_version }}"
-            PGPASSWORD: "{{ odoo_db_pass }}"
-            PGUSER: "{{ odoo_db_user }}"
-            PROXY_MODE: "true"
-            PYTHONOPTIMIZE: 2
-            PGDATABASE: "{{ odoo_db_test }}"
-            SMTP_PORT: "1025"
         depends_on:
             - db
             - smtp
         tty: true
         volumes:
-            - filestore:/var/lib/odoo:z
+            - filestore:/opt/odoo/data:z
         networks:
             default:
             inverseproxy_shared:
@@ -48,7 +36,8 @@ services:
             traefik.www.frontend.rule: "Host:{{ odoo_test_url }}"
         command:
             - odoo
-            - --max-cron-threads=0
+            - --smtp-port=1025
+            - --database={{ odoo_db_test }}
 
     db:
         image: postgres:{{ odoo_db_version }}-alpine

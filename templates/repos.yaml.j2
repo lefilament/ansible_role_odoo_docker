@@ -1,25 +1,3 @@
 {% for repo in odoo_custom_modules | default([]) %}
-# Le Filament repo {{ repo }} 
-./private/{{ repo }}:
-    defaults:
-        depth: $DEPTH_DEFAULT
-    remotes:
-        lf: https://{{ lf_bitbucket_name }}:{{ lf_bitbucket_pass }}@bitbucket.org/chaudlesmarmots/{{ repo }}.git
-    target:
-        lf $ODOO_VERSION
-    merges:
-        - lf $ODOO_VERSION
-{% endfor %}
-{% for repo in odoo_other_modules | default([]) %}
-# Other modules {{ repo.repo }}
-./{{ repo.repo }}:
-    defaults:
-        depth: $DEPTH_DEFAULT
-    remotes:
-        {{ repo.repo }}: {{ repo.url }}
-    target:
-        {{ repo.repo }} $ODOO_VERSION
-    merges:
-        - {{ repo.repo }} $ODOO_VERSION
-    
+{{ repo }}: https://github.com/lefilament/{{ repo }}.git
 {% endfor %}

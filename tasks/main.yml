@@ -19,26 +19,15 @@
 #--------------------------------------------------
 - name: TEST create Odoo docker structure on server in /home/docker/odootest
   file:
-    name: "{{ item }}"
+    name: /home/docker/odootest/odoo/private
     state: directory
     owner: root
     group: root
-  with_items:
-  - /home/docker/odootest/odoo/custom/build.d
-  - /home/docker/odootest/odoo/custom/dependencies
-  - /home/docker/odootest/odoo/custom/src/
   tags: odoo_test
 
-- name: TEST create link for src towards custom src
-  file:
-    name: "/home/docker/odootest/src"
-    state: link
-    src: "/home/docker/odootest/odoo/custom/src"
-  tags: odoo_test
-
-- name: TEST copy call for Tecnativa docker image 
-  template:
-    src: Dockerfile-odoo.j2
+- name: TEST copy Dockerfile to retrieve private repos and extra OCA ones
+  copy:
+    src: Dockerfile
     dest: "/home/docker/odootest/odoo/Dockerfile"
     owner: root
     group: root
@@ -46,23 +35,36 @@
   notify: build odoo docker test
   tags: odoo_test
 
-- name: TEST set {{ item }}  variables from template
+- name: TEST copy update scripts to be run during build
+  copy:
+    src: "{{ item }}"
+    dest: "/home/docker/odootest/odoo/private/"
+    owner: root
+    group: root
+    mode: 0750
+  with_items:
+    - fetch_repos
+    - fetch_repos_addons
+  notify: build odoo docker test
+  tags: odoo_test
+
+- name: TEST set {{ item }} variables from template
   template:
     src: "{{ item }}.j2"
-    dest: "/home/docker/odootest/odoo/custom/src/{{ item }}"
+    dest: "/home/docker/odootest/odoo/private/{{ item }}"
     owner: root
     group: root
     mode: 0644 
   with_items:
     - repos.yaml
-    - addons.yaml
+    - repos-addons.yaml
   notify: build odoo docker test
   tags: odoo_test
 
-- name: TEST copy pip extra requirements file
-  copy:
-    src: pip.txt
-    dest: "/home/docker/odootest/odoo/custom/dependencies/pip.txt"
+- name: TEST copy odoo.conf file
+  template:
+    src: odoo.conf.j2
+    dest: "/home/docker/odootest/odoo/odoo.conf"
     owner: root
     group: root
     mode: 0644
@@ -97,6 +99,7 @@
     owner: root
     group: root
     mode: 0400
+  notify: start odoo docker prod
   tags: odoo_prod
 
 #--------------------------------------------------
@@ -192,20 +195,12 @@
     mode: 0400
   tags: odoo_prod
 
-- name: PROD add cron job to run backup every day - step 1 mount NFS
-  cron:
-    name: backup odoo
-    minute: 58
-    hour: 1
-    job: mount /home/docker/backups/odoo
-  tags: odoo_prod
-
-- name: PROD add cron job to run backup every day - step 2 backup and unmount NFS
+- name: PROD add cron job to run backup every day
   cron:
     name: backup odoo
     minute: 03
     hour: 2
-    job: /usr/local/bin/docker-compose -f /home/docker/backups/backup-odoo.yaml run --rm backup_odoo && umount /home/docker/backups/odoo
+    job: /usr/local/bin/docker-compose -f /home/docker/backups/backup-odoo.yaml run --rm backup_odoo
   tags: odoo_prod
 
 - name: TEST copy compose file to restore db from prod

@@ -1,0 +1,13 @@
+FROM remifilament/odoo:10.0
+MAINTAINER Le Filament <https://le-filament.com>
+
+USER root 
+# Install private repos
+COPY ./private/* /opt/odoo/private/
+RUN /opt/odoo/private/fetch_repos_addons
+RUN /opt/odoo/private/fetch_repos
+
+USER odoo
+# Copy Odoo configuration file
+COPY ./odoo.conf /opt/odoo/etc/odoo.conf
+

@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+import grp
+import os
+import pwd
+import shutil
+import yaml
+from subprocess import call
+from urlparse import urlsplit
+
+DEFAULT_PRIVATE_REPO="/opt/odoo/additional_addons"
+REPO_ADDON_FILE="/opt/odoo/private/repos-addons.yaml"
+UID = pwd.getpwnam("odoo").pw_uid
+GID = grp.getgrnam("odoo").gr_gid
+
+if os.path.isfile(REPO_ADDON_FILE):
+    repos = yaml.safe_load(open(REPO_ADDON_FILE))
+    for url in repos:
+        repo = urlsplit(url).path
+        call(["git","clone","-b","10.0","--depth","1",url,"/tmp/addon"+repo])
+        for module in repos[url]:
+            shutil.move("/tmp/addon"+repo+"/"+module,DEFAULT_PRIVATE_REPO+"/"+module)
+
+for root, dirs, files in os.walk(DEFAULT_PRIVATE_REPO):
+    for target in dirs + files:
+        os.chown(os.path.join(root, target), UID, GID)
+shutil.rmtree("/tmp/addon")
+

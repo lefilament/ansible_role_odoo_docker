@@ -4,7 +4,8 @@
     project_src: /home/docker/odootest/
     build: yes
     nocache: yes
-    pull: yes
+    pull: no
+    recreate: always
     restarted: yes
     remove_orphans: yes
   async: 600
