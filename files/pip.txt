@@ -1,7 +1,0 @@
-checksumdir
-unicodecsv
-unidecode
-requests
-xlsxwriter
-simplejson
-wtforms
