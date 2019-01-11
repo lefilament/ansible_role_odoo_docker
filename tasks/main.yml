@@ -110,7 +110,7 @@
   git: repo="https://git.weboob.org/weboob/devel.git" dest="/root/weboob"
   when: banking is defined
   register: weboob
-  tags: bank
+  tags: odoo_prod, bank
 
 - name: Install necessary python modules
   pip:  name="{{ item }}"
@@ -123,19 +123,19 @@
     - lxml
     - Pillow
   when: banking is defined
-  tags: bank
+  tags: odoo_prod, bank
 
 - name: Create Config directory
   file:
     name: /root/.config/weboob
     state: directory
   when: banking is defined
-  tags: bank
+  tags: odoo_prod, bank
 
 - name: Copy configuration file
   template: src=backends.j2 dest=/root/.config/weboob/backends mode=0400
   when: banking is defined
-  tags: bank
+  tags: odoo_prod, bank
 
 - name: PROD create bank repo
   file:
