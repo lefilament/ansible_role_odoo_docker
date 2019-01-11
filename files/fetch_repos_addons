@@ -15,14 +15,15 @@ GID = grp.getgrnam("odoo").gr_gid
 
 if os.path.isfile(REPO_ADDON_FILE):
     repos = yaml.safe_load(open(REPO_ADDON_FILE))
-    for url in repos:
-        repo = urlsplit(url).path
-        call(["git","clone","-b","10.0","--depth","1",url,"/tmp/addon"+repo])
-        for module in repos[url]:
-            shutil.move("/tmp/addon"+repo+"/"+module,DEFAULT_PRIVATE_REPO+"/"+module)
+    if repos:
+        for url in repos:
+            repo = urlsplit(url).path
+            call(["git","clone","-b","10.0","--depth","1",url,"/tmp/addon"+repo])
+            for module in repos[url]:
+                shutil.move("/tmp/addon"+repo+"/"+module,DEFAULT_PRIVATE_REPO+"/"+module)
 
-for root, dirs, files in os.walk(DEFAULT_PRIVATE_REPO):
-    for target in dirs + files:
-        os.chown(os.path.join(root, target), UID, GID)
-shutil.rmtree("/tmp/addon")
+        for root, dirs, files in os.walk(DEFAULT_PRIVATE_REPO):
+            for target in dirs + files:
+                os.chown(os.path.join(root, target), UID, GID)
+        shutil.rmtree("/tmp/addon")
 
