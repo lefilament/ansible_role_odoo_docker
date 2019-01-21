@@ -5,7 +5,11 @@ services:
         hostname: backup-odoo
         domainname: "{{ odoo_url }}"
         environment:
+{% if inventory_hostname in groups.maintenance_sftp %}
+            DST: "sftp://{{ backup_sftp_user }}@{{ hostvars['Filament_Backup'].ansible_ssh_host }}:2222/{{ inventory_hostname|lower }}/"
+{% else %}
             DST: "file:///backups/"
+{% endif %}
             PASSPHRASE: "{{ odoo_master_pass }}"
             PGDATABASE: "{{ odoo_db }}"
             PGPASSWORD: "{{ odoo_db_pass }}"
@@ -18,7 +22,11 @@ services:
             JOB_302_WHEN: "daily"
         volumes:
             - odoo_filestore:/mnt/backup/src/odoo:z
+{% if inventory_hostname in groups.maintenance_sftp %}
+            - ./.ssh:/root/.ssh:ro
+{% else %}
             - ./odoo:/backups
+{% endif %}
         networks:
             - odoo_default
         command:

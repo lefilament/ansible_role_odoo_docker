@@ -26,8 +26,8 @@
   tags: odoo_test
 
 - name: TEST copy Dockerfile to retrieve private repos and extra OCA ones
-  copy:
-    src: Dockerfile
+  template:
+    src: Dockerfile.j2
     dest: "/home/docker/odootest/odoo/Dockerfile"
     owner: root
     group: root
@@ -193,6 +193,27 @@
     owner: root
     group: root
     mode: 0400
+  tags: odoo_prod
+
+- name: PROD create .ssh directory
+  file:
+    name: /home/docker/backups/.ssh
+    state: directory
+    owner: root
+    group: root
+    mode: 0700
+  when: inventory_hostname in groups.maintenance_sftp
+  tags: odoo_prod
+
+- name: PROD copy RSA key for SFTP user
+  copy:
+    src: /home/{{ host_user }}/.ssh/id_rsa
+    remote_src: yes
+    dest: /home/docker/backups/.ssh/id_rsa
+    owner: root
+    group: root
+    mode: 0600
+  when: inventory_hostname in groups.maintenance_sftp
   tags: odoo_prod
 
 - name: PROD add cron job to run backup every day
