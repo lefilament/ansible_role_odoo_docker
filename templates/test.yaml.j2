@@ -8,6 +8,8 @@ services:
         depends_on:
             - db
             - smtp
+        environment:
+            PGDATABASE: "{{ odoo_db_test }}"
         tty: true
         volumes:
             - filestore:/opt/odoo/data:z
