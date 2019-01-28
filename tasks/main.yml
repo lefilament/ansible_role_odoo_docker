@@ -36,7 +36,7 @@
   tags: odoo_test
 
 - name: TEST copy update scripts to be run during build
-  copy:
+  template:
     src: "{{ item }}"
     dest: "/home/docker/odootest/odoo/private/"
     owner: root
