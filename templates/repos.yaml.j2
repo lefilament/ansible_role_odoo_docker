@@ -1,3 +1,3 @@
-{% for repo in odoo_custom_modules | default([]) %}
+{% for repo in odoo_custom_modules | default([]) | sort %}
 {{ repo }}: https://github.com/lefilament/{{ repo }}.git
 {% endfor %}

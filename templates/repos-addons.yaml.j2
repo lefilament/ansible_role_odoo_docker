@@ -1,10 +1,10 @@
-{% for repo in odoo_other_modules | default([]) %}
+{% for repo in odoo_other_modules | default([]) | sort %}
 {{ repo.url }}:
 {% for modules in repo.modules %}
     - {{ modules }}
 {% endfor %}
 {% endfor %}
-{% for repo in odoo_custom_modules_oca | default([]) %}
+{% for repo in odoo_custom_modules_oca | default([]) | sort %}
 https://github.com/OCA/{{ repo.repo }}.git:
 {% for modules in repo.modules %}
     - {{ modules }}
