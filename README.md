@@ -47,9 +47,8 @@ odoo_db_version: "10"
 
 # Odoo master password
 odoo_master_pass: "{{ SERVER_odoo_master_pass }}"
-# password for proxy protected pages = same as master password but encoded with bcrypt
-# Warning: the bcrypt password needs to be with double $$ each time or Docker would not start
-PROXY_BCRYPT: "{{ SERVER_srv_proxy_bcpass }}"
+# password for proxy protected pages
+srv_proxy_pass: "{{ SERVER_srv_proxy_bcpass }}"
 
 # Odoo database user
 odoo_db_user: "{{ SERVER_odoo_db_user }}"

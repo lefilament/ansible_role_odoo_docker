@@ -26,13 +26,13 @@ services:
             traefik.frontend.headers.customResponseHeaders:
                 "X-Robots-Tag:noindex, nofollow"
             traefik.dbmanager.frontend.auth.basic.users:
-                "{{ odoo_db_user }}:{{ PROXY_BCRYPT }}"
+                "{{ odoo_db_user }}:{{ srv_proxy_pass | password_hash('apr_md5_crypt', 65534 | random(seed=inventory_hostname) | string) | regex_replace('\\$','$$') }}"
             traefik.dbmanager.frontend.rule:
                 "Host:{{ odoo_test_url }};PathPrefix:/web/database/"
             traefik.dbselector.frontend.rule:
                 "Host:{{ odoo_test_url }};PathPrefix:/web/database/{p:selector|list}"
             traefik.websiteinfo.frontend.auth.basic.users:
-                "{{ odoo_db_user }}:{{ PROXY_BCRYPT }}"
+                "{{ odoo_db_user }}:{{ srv_proxy_pass | password_hash('apr_md5_crypt', 65534 | random(seed=inventory_hostname) | string) | regex_replace('\\$','$$') }}"
             traefik.websiteinfo.frontend.rule:
                 "Host:{{ odoo_test_url }};Path:/website/info"
             traefik.www.frontend.rule: "Host:{{ odoo_test_url }}"
