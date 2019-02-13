@@ -1,4 +1,10 @@
 ---
+- name: start odoo docker whitelists
+  docker_service:
+    project_src: /home/docker
+    files: whitelists.yaml
+    project_name: whitelists
+
 - name: build odoo docker test
   docker_service:
     project_src: /home/docker/odootest/
@@ -15,12 +21,6 @@
   docker_service:
     project_src: /home/docker/odootest/
     remove_orphans: yes
-
-- name: start odoo docker whitelists
-  docker_service:
-    project_src: /home/docker
-    files: whitelists.yaml
-    project_name: whitelists
 
 - name: start odoo docker prod
   docker_service:
