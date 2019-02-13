@@ -113,15 +113,8 @@
   tags: odoo_prod, bank
 
 - name: Install necessary python modules
-  pip:  name="{{ item }}"
-  with_items:
-    - prettytable
-    - cssselect
-    - html2text
-    - unidecode
-    - python-dateutil
-    - lxml
-    - Pillow
+  pip:
+    name: ['prettytable', 'cssselect', 'html2text', 'unidecode', 'python-dateutil', 'lxml', 'Pillow']
   when: banking is defined
   tags: odoo_prod, bank
 
