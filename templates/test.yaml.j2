@@ -57,13 +57,15 @@ services:
         restart: unless-stopped
         networks:
             default:
-            inverseproxy_shared:
+            inverseproxy_smtp:
         labels:
-            traefik.docker.network: "inverseproxy_shared"
+            traefik.docker.network: "inverseproxy_smtp"
             traefik.enable: "true"
             traefik.frontend.passHostHeader: "true"
             traefik.port: "8025"
             traefik.frontend.rule: "Host:{{ odoo_test_url }};PathPrefixStrip:/smtp/"
+            traefik.frontend.auth.basic.users:
+                "{{ odoo_db_user }}:{{ odoo_db_pass | password_hash('apr_md5_crypt', 65534 | random(seed=inventory_hostname) | string) | regex_replace('\\$','$$') }}"
 
 networks:
     default:
@@ -71,6 +73,8 @@ networks:
         driver_opts:
             encrypted: 1
     inverseproxy_shared:
+        external: true
+    inverseproxy_smtp:
         external: true
     whitelists_proxy:
         external: true
