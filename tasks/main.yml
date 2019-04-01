@@ -186,6 +186,7 @@
     owner: root
     group: root
     mode: 0400
+  when: inventory_hostname in groups.maintenance_contract
   tags: odoo_prod
 
 - name: PROD create .ssh directory
@@ -209,12 +210,31 @@
   when: inventory_hostname in groups.maintenance_sftp
   tags: odoo_prod
 
-- name: PROD add cron job to run backup every day
+- name: PROD add cron job to run backup every day - step 1 mount NFS
+  cron:
+    name: mount nfs for backup odoo
+    minute: 58
+    hour: 1
+    job: mount /home/docker/backups/odoo
+  when: inventory_hostname in groups.maintenance_nfs
+  tags: odoo_prod
+
+- name: PROD add cron job to run backup every day - step 2 backup and unmount NFS
   cron:
     name: backup odoo
-    minute: 03
+    minute: 8
     hour: 2
+    job: /usr/local/bin/docker-compose -f /home/docker/backups/backup-odoo.yaml run --rm backup_odoo && umount /home/docker/backups/odoo
+  when: inventory_hostname in groups.maintenance_nfs
+  tags: odoo_prod
+
+- name: PROD add cron job to run backup every day - SFTP case
+  cron:
+    name: backup odoo
+    minute: 58
+    hour: 1
     job: /usr/local/bin/docker-compose -f /home/docker/backups/backup-odoo.yaml run --rm backup_odoo
+  when: inventory_hostname in groups.maintenance_sftp
   tags: odoo_prod
 
 - name: TEST copy compose file to restore db from prod
@@ -224,5 +244,6 @@
     owner: root
     group: root
     mode: 0400
+  when: inventory_hostname in groups.maintenance_contract
   tags: odoo_test
 
