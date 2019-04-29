@@ -157,6 +157,15 @@
   when: banking is defined and bank_account2 is defined
   tags: odoo_prod, bank
 
+- name: PROD add cron job to get bank account 3 every day
+  cron:
+    name: import bank moves account 3
+    minute: 10
+    hour: 21
+    job: /root/weboob/tools/local_run.sh boobank history {{ bank_account3 }} `date -d "last week" +\%Y-\%m-\%d` -f ofx | sed -n '/OFXHEADER/,$p' | sed 's/.*OFXHEADER/OFXHEADER/g' > /home/docker/odoo/bank/bank_account3_import.ofx ; chmod 444 /home/docker/odoo/bank/bank_account3_import.ofx
+  when: banking is defined and bank_account3 is defined
+  tags: odoo_prod, bank
+
 - name: PROD add cron job to get bank 2 account every day
   cron:
     name: import bank 2 moves
