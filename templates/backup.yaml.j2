@@ -6,7 +6,7 @@ services:
         domainname: "{{ odoo_url }}"
         environment:
 {% if inventory_hostname in groups.maintenance_sftp %}
-            DST: "sftp://{{ backup_sftp_user }}@{{ hostvars['Filament_Backup'].ansible_ssh_host }}:2222/{{ inventory_hostname|lower }}/"
+            DST: "sftp://{{ backup_sftp_user }}@{{ hostvars['Filament_Backup'].ansible_ssh_host }}:{{ ansible_ssh_port }}/{{ inventory_hostname|lower }}/"
 {% else %}
             DST: "file:///backups/"
 {% endif %}
