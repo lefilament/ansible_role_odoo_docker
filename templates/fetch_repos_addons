@@ -26,8 +26,8 @@ if os.path.isfile(REPO_ADDON_FILE):
     if repos:
         for url in repos:
             repo = urlsplit(url).path
-            call(["git","clone","-b","{{ odoo_version }}","--depth","1",url,"/tmp/addon"+repo])
-            for module in repos[url]:
+            call(["git","clone","-b",repos[url]["branch"],"--depth","1",url,"/tmp/addon"+repo])
+            for module in repos[url]["modules"]:
                 shutil.move("/tmp/addon"+repo+"/"+module,DEFAULT_PRIVATE_REPO+"/"+module)
 
         for root, dirs, files in os.walk(DEFAULT_PRIVATE_REPO):
