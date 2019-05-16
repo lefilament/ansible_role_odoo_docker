@@ -1,5 +1,17 @@
 version: "2.1"
 services:
+    accounts_google_com:
+        image: tecnativa/whitelist
+        restart: unless-stopped
+        networks:
+            proxy:
+                aliases:
+                    - "accounts.google.com"
+            public:
+        environment:
+            TARGET: "accounts.google.com"
+            PRE_RESOLVE: 1
+
     cdnjs_cloudflare_com:
         image: tecnativa/whitelist
         restart: unless-stopped
@@ -22,6 +34,18 @@ services:
             public:
         environment:
             TARGET: "www.google.com"
+            PRE_RESOLVE: 1
+
+    www_googleapis_com:
+        image: tecnativa/whitelist
+        restart: unless-stopped
+        networks:
+            proxy:
+                aliases:
+                    - "www.googleapis.com"
+            public:
+        environment:
+            TARGET: "www.googleapis.com"
             PRE_RESOLVE: 1
 
     www_gravatar_com:
