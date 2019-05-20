@@ -26,6 +26,11 @@ services:
             traefik.frontend.headers.STSPreload: "true"
             traefik.frontend.passHostHeader: "true"
             traefik.port: "8069"
+{% if ansible_processor_vcpus > 2 %}
+            traefik.longpolling.port: "8072"
+            traefik.longpolling.frontend.rule:
+                "Host:{{ odoo_test_url }};PathPrefix:/longpolling/"
+{% endif %}
             traefik.frontend.headers.customResponseHeaders:
                 "X-Robots-Tag:noindex, nofollow"
             traefik.dbmanager.frontend.auth.basic.users:
@@ -43,6 +48,10 @@ services:
             - odoo
             - --smtp-port=1025
             - --database={{ odoo_db_test }}
+{% if ansible_processor_vcpus > 2 %}
+            - --workers=1
+            - --max-cron-threads=1
+{% endif %}
 
     db:
         image: postgres:{{ odoo_db_version }}-alpine

@@ -17,7 +17,7 @@ db_user = {{ odoo_db_user }}
 ; limit_time_cpu = 60
 ; limit_time_real = 120
 ; list_db = True
-load_language = fr_FR
+; load_language = fr_FR
 ; log_db = False
 ; log_handler = [':INFO']
 ; log_level = info
@@ -38,7 +38,12 @@ smtp_server = smtp
 ; smtp_user = False
 unaccent = True
 without_demo = all
+{% if ansible_processor_vcpus > 2 %}
+workers = {{ (ansible_processor_vcpus * 2 - 1) | int | abs }}
+max_cron_threads = {{ ansible_processor_vcpus | int }}
+{% else %}
 ; workers = 0
+{% endif %}
 ; xmlrpc = True
 ; xmlrpc_interface = 
 ; xmlrpc_port = 8069
