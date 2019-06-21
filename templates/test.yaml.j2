@@ -49,7 +49,7 @@ services:
             - --smtp-port=1025
             - --database={{ odoo_db_test }}
 {% if ansible_processor_vcpus > 2 %}
-            - --workers=1
+            - --workers=2
             - --max-cron-threads=1
 {% endif %}
 
