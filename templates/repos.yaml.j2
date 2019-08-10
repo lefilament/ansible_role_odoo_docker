@@ -1,3 +1,6 @@
 {% for repo in odoo_custom_modules | default([]) | sort %}
 {{ repo }}: https://bitbucket.org/lefilament/{{ repo }}.git
 {% endfor %}
+{% for repo in odoo_other_repos | default([]) | sort %}
+{{ repo }}: {{ repo.url }}
+{% endfor %}

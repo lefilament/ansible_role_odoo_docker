@@ -71,6 +71,17 @@
   notify: build odoo docker test
   tags: odoo_test
 
+- name: TEST copy private ssh keys file
+  copy:
+    content: "{{ git_private_keys }}"
+    dest: "/home/docker/odootest/odoo/id_rsa"
+    owner: root
+    group: root
+    mode: 0600
+  notify: build odoo docker test
+  when: git_private_keys is defined
+  tags: odoo_test
+
 - name: TEST copy test docker compose service
   template:
     src: test.yaml.j2
@@ -187,6 +198,24 @@
 #--------------------------------------------------
 # Backup section
 #--------------------------------------------------
+
+- name: Create SSH key directory for SFTP backups
+  file:
+    name: /home/docker/backups/.ssh
+    state: directory
+    owner: root
+    group: root
+  when: inventory_hostname in groups.maintenance_sftp
+
+- name: Copy private key for SFTP backups
+  copy:
+    src: /home/{{ host_user }}/.ssh/id_rsa
+    remote_src: yes
+    dest: /home/docker/backups/.ssh/id_rsa
+    owner: root
+    group: root
+    mode: 0600
+  when: inventory_hostname in groups.maintenance_sftp
 
 - name: PROD copy docker compose for backups
   template:

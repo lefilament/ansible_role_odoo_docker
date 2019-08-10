@@ -2,6 +2,10 @@ FROM lefilament/odoo:{{ odoo_version }}
 MAINTAINER Le Filament <https://le-filament.com>
 
 USER root 
+{% if git_private_keys is defined %}
+# Install private keys
+COPY ./id_rsa ~root/.ssh/
+{% endif %}
 # Install private repos
 COPY ./private/* /opt/odoo/private/
 RUN /opt/odoo/private/fetch_repos_addons
@@ -10,4 +14,3 @@ RUN /opt/odoo/private/fetch_repos
 USER odoo
 # Copy Odoo configuration file
 COPY ./odoo.conf /opt/odoo/etc/odoo.conf
-
