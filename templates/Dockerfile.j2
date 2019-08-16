@@ -11,6 +11,8 @@ COPY ./private/* /opt/odoo/private/
 RUN /opt/odoo/private/fetch_repos_addons
 RUN /opt/odoo/private/fetch_repos
 
-USER odoo
 # Copy Odoo configuration file
 COPY ./odoo.conf /opt/odoo/etc/odoo.conf
+RUN chown odoo:odoo /opt/odoo/etc/odoo.conf
+
+USER odoo

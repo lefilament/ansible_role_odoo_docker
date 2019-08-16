@@ -67,7 +67,7 @@
     dest: "/home/docker/odootest/odoo/odoo.conf"
     owner: root
     group: root
-    mode: 0644
+    mode: 0600
   notify: build odoo docker test
   tags: odoo_test
 
