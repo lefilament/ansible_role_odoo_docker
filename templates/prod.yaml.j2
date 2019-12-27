@@ -33,19 +33,19 @@ services:
 {% if ansible_processor_vcpus > 2 %}
             traefik.longpolling.port: "8072"
             traefik.longpolling.frontend.rule:
-                "Host:{{ odoo_url }};PathPrefix:/longpolling/"
+                "Host:{{ odoo_url }}{% if odoo_url2 is defined %},{{ odoo_url2 }}{% endif %};PathPrefix:/longpolling/"
 {% endif %}
             traefik.dbmanager.frontend.auth.basic.users:
                 "{{ odoo_db_user }}:{{ srv_proxy_pass | password_hash('apr_md5_crypt', 65534 | random(seed=inventory_hostname) | string) | regex_replace('\\$','$$') }}"
             traefik.dbmanager.frontend.rule:
-                "Host:{{ odoo_url }};PathPrefix:/web/database/"
+                "Host:{{ odoo_url }}{% if odoo_url2 is defined %},{{ odoo_url2 }}{% endif %};PathPrefix:/web/database/"
             traefik.dbselector.frontend.rule:
-                "Host:{{ odoo_url }};PathPrefix:/web/database/{p:selector|list}"
+                "Host:{{ odoo_url }}{% if odoo_url2 is defined %},{{ odoo_url2 }}{% endif %};PathPrefix:/web/database/{p:selector|list}"
             traefik.websiteinfo.frontend.auth.basic.users:
                 "{{ odoo_db_user }}:{{ srv_proxy_pass | password_hash('apr_md5_crypt', 65534 | random(seed=inventory_hostname) | string) | regex_replace('\\$','$$') }}"
             traefik.websiteinfo.frontend.rule:
-                "Host:{{ odoo_url }};Path:/website/info"
-            traefik.www.frontend.rule: "Host:{{ odoo_url }}"
+                "Host:{{ odoo_url }}{% if odoo_url2 is defined %},{{ odoo_url2 }}{% endif %};Path:/website/info"
+            traefik.www.frontend.rule: "Host:{{ odoo_url }}{% if odoo_url2 is defined %},{{ odoo_url2 }}{% endif %}"
 
     db:
         image: postgres:{{ odoo_db_version }}-alpine

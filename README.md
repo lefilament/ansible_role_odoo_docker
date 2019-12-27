@@ -37,6 +37,8 @@ host_root_password: "{{ SERVER_srv_root_pass }}"
 ## Odoo configuration
 # PRODUCTION URL
 odoo_url: "{{ SERVER_odoo_url }}"
+# OPTIONAL EXTRA URL separated by comma (and no space) to be served by proxy
+odoo_url2: "{{ SERVER_odoo_url2 }}"
 # TEST URL
 odoo_test_url: "{{ SERVER_odoo_test_url }}"
 
@@ -71,7 +73,7 @@ odoo_other_modules:
      - auth_cas
 
 # OCA modules - these should be limited to the ones not already defined [here](https://github.com/lefilament/ansible/blob/master/group_vars/docker_odoo)
-# in default_odoo_custom_modules_oca (since these are already part of remifilament/odoo:10.0 docker)
+# in default_odoo_custom_modules_oca (since these are already part of lefilament/odoo:10.0 docker)
 odoo_custom_modules_oca:
   - repo: server-tools
     modules:
