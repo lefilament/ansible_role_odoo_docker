@@ -4,7 +4,7 @@
 
 This role is originally derivated from [Tecnativa/Doodba](https://github.com/Tecnativa/doodba), although it has been reworked lately in order to reduce drastically the size of the Docker image used, since using Tecnativa Doodba, we were reaching 1.5 GB for the image, when the new images are around 800 MB.
 
-This role is taking advantage of [Le Filament Odoo Docker](https://cloud.docker.com/repository/docker/remifilament/odoo) which is also described on corresponding [Le Filament GitHub page](https://github.com/lefilament/odoo_docker) and adds on top additional OCA modules and private modules defined with variables *odoo_custom_modules_oca* and *odoo_custom_modules* (see below)
+This role is taking advantage of [Le Filament Odoo Docker](https://hub.docker.com/repository/docker/lefilament/odoo) which is also described on corresponding [Le Filament GitHub page](https://github.com/lefilament/odoo_docker) and adds on top additional OCA modules and private modules defined with variables *odoo_custom_modules_oca* and *odoo_custom_modules* (see below)
 
 This role allows you to deploy and start 2 Odoo docker instances on your server : a production instance (in /home/docker/odoo) and a test instance (in /home/docker/odootest/).
 
@@ -15,9 +15,9 @@ On top of deploying and starting the Odoo instances, the following functionaliti
 - backup and restore based on duplicity docker from [Tecnativa](https://github.com/Tecnativa/docker-duplicity) which has been customized for our needs to backup on NFS directory and running it every night using cron, keeping only the latest week incremental backups for 1 month
 - whitelists based on white list docker from [Tecnativa](https://github.com/Tecnativa/docker-whitelist) in order to block any not identified traffic towards the outside of the server
 
-Prior to running this role, you would need to have docker and docker-compose installed on your server and a traefik proxy (which is the purpose of [this role](https://github.com/remi-filament/ansible_role_docker_server))
+Prior to running this role, you would need to have docker and docker-compose installed on your server and a traefik proxy (which is the purpose of [this role](https://github.com/lefilament/ansible_role_docker_server))
 
-This role is not foreseen to be used on a development environment (which is the purpose of [that role](https://github.com/remi-filament/docker_odoo_dev))
+This role is not foreseen to be used on a development environment (which is the purpose of [that role](https://github.com/lefilament/docker_odoo_dev))
 
 In order to use this role, you would need to define the following variables for your server (in hostvars for instance) - Only the names of the variables are provided below (not the values) for these used by this role to properly configure everything, and some examples for list of modules, you may copy this file directly in hostvars and set the variable although we could only encourage you to use an Ansible vault and refer vault variables from here:
 
@@ -123,11 +123,11 @@ bank_account2: "{{ SERVER_bank_account2 }}"
 # Procedure to restore Odoo from backup
 
 In order to restore Owncloud database and files from backup, it is necessary to first delete the database (from Odoo interface URL/web/database/manager) then change directory to /home/docker/backups and run the following command:
-```docker-compose -f backup-odoo.yaml run --rm backup_odoo sh -c "restore --force && createdb -T template0 \$PGDATABASE && pg_restore -d \$PGDATABASE \$SRC/\$PGDATABASE.pgdump"```
+`docker-compose -f backup-odoo.yaml run --rm backup_odoo sh -c "restore --force && createdb -T template0 \$PGDATABASE && pg_restore -d \$PGDATABASE \$SRC/\$PGDATABASE.pgdump"`
 
 
 You can also copy production database inside test one, first delete the database from test instance (from Odoo test interface URL/web/database/manager) then change directory to /home/docker/backups and run the following command:
-```docker-compose -f restore-odootest.yaml run --rm restore_test```
+`docker-compose -f restore-odootest.yaml run --rm restore_test`
 
 
 # Credits
