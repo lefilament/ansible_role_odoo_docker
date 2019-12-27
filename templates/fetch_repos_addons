@@ -8,16 +8,16 @@ import grp
 import os
 import pwd
 import shutil
-import yaml
 from subprocess import call
 {% if odoo_version == 12.0 or odoo_version == 11.0 %}
 from urllib.parse import urlsplit
 {% else %}
 from urlparse import urlsplit
 {% endif %}
+import yaml
 
-DEFAULT_PRIVATE_REPO="/opt/odoo/additional_addons"
-REPO_ADDON_FILE="/opt/odoo/private/repos-addons.yaml"
+DEFAULT_PRIVATE_REPO = "/opt/odoo/additional_addons"
+REPO_ADDON_FILE = "/opt/odoo/private/repos-addons.yaml"
 UID = pwd.getpwnam("odoo").pw_uid
 GID = grp.getgrnam("odoo").gr_gid
 
@@ -26,12 +26,13 @@ if os.path.isfile(REPO_ADDON_FILE):
     if repos:
         for url in repos:
             repo = urlsplit(url).path
-            call(["git","clone","-b",repos[url]["branch"],"--depth","1",url,"/tmp/addon"+repo])
+            call(["git", "clone", "-b", repos[url]["branch"], "--depth", "1",
+                  url, "/tmp/addon"+repo])
             for module in repos[url]["modules"]:
-                shutil.move("/tmp/addon"+repo+"/"+module,DEFAULT_PRIVATE_REPO+"/"+module)
+                shutil.move("/tmp/addon"+repo+"/"+module,
+                            DEFAULT_PRIVATE_REPO+"/"+module)
 
         for root, dirs, files in os.walk(DEFAULT_PRIVATE_REPO):
             for target in dirs + files:
                 os.chown(os.path.join(root, target), UID, GID)
         shutil.rmtree("/tmp/addon")
-
