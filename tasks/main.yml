@@ -198,24 +198,13 @@
 #--------------------------------------------------
 # Backup section
 #--------------------------------------------------
-
-- name: Create SSH key directory for SFTP backups
-  file:
-    name: /home/docker/backups/.ssh
-    state: directory
-    owner: root
-    group: root
-  when: inventory_hostname in groups.maintenance_sftp
-
-- name: Copy private key for SFTP backups
+- name: Copy docker file for postgres duplicity
   copy:
-    src: /home/{{ host_user }}/.ssh/id_rsa
-    remote_src: yes
-    dest: /home/docker/backups/.ssh/id_rsa
+    src: Dockerfile-backup
+    dest: /home/docker/backups/Dockerfile-odoobak
     owner: root
     group: root
-    mode: 0600
-  when: inventory_hostname in groups.maintenance_sftp
+    mode: 0644
 
 - name: PROD copy docker compose for backups
   template:
@@ -227,52 +216,20 @@
   when: inventory_hostname in groups.maintenance_contract
   tags: odoo_prod
 
-- name: PROD create .ssh directory
-  file:
-    name: /home/docker/backups/.ssh
-    state: directory
-    owner: root
-    group: root
-    mode: 0700
-  when: inventory_hostname in groups.maintenance_sftp
-  tags: odoo_prod
-
-- name: PROD copy RSA key for SFTP user
-  copy:
-    src: /home/{{ host_user }}/.ssh/id_rsa
-    remote_src: yes
-    dest: /home/docker/backups/.ssh/id_rsa
-    owner: root
-    group: root
-    mode: 0600
-  when: inventory_hostname in groups.maintenance_sftp
-  tags: odoo_prod
-
-- name: PROD add cron job to run backup every day - step 1 mount NFS
+- name: PROD remove cron job to mount NFS
   cron:
     name: mount nfs for backup odoo
-    minute: 58
-    hour: 1
-    job: mount /home/docker/backups/odoo
-  when: inventory_hostname in groups.maintenance_nfs
+    state: absent
+  when: inventory_hostname in groups.maintenance_contract
   tags: odoo_prod
 
-- name: PROD add cron job to run backup every day - step 2 backup and unmount NFS
+- name: PROD add cron job to run backup every day
   cron:
     name: backup odoo
     minute: 8
     hour: 2
-    job: /usr/local/bin/docker-compose -f /home/docker/backups/backup-odoo.yaml run --rm backup_odoo && umount /home/docker/backups/odoo
-  when: inventory_hostname in groups.maintenance_nfs
-  tags: odoo_prod
-
-- name: PROD add cron job to run backup every day - SFTP case
-  cron:
-    name: backup odoo
-    minute: 58
-    hour: 1
     job: /usr/local/bin/docker-compose -f /home/docker/backups/backup-odoo.yaml run --rm backup_odoo
-  when: inventory_hostname in groups.maintenance_sftp
+  when: inventory_hostname in groups.maintenance_contract
   tags: odoo_prod
 
 - name: TEST copy compose file to restore db from prod
