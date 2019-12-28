@@ -27,7 +27,7 @@ services:
             traefik.enable: "true"
             traefik.http.routers.odoo-unsec.entrypoints: "http"
             traefik.http.routers.odoo-unsec.middlewares: "https-redirect@file"
-            traefik.http.routers.odoo-unsec.rule: "Host(`{{ odoo_url }}{% if odoo_url2 is defined %},{{ odoo_url2 }}{% endif %}}`)"
+            traefik.http.routers.odoo-unsec.rule: "Host(`{{ odoo_url }}{% if odoo_url2 is defined %},{{ odoo_url2 }}{% endif %}`)"
             traefik.http.routers.odoo-unsec.service: "odoo"
 {% if ansible_processor_vcpus > 2 %}
             traefik.http.routers.odoo-longpolling.entrypoints: "https"
