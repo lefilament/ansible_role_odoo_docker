@@ -21,29 +21,35 @@ services:
         labels:
             traefik.docker.network: "inverseproxy_shared"
             traefik.enable: "true"
-            traefik.frontend.headers.STSSeconds: "15552000"
-            traefik.frontend.headers.STSIncludeSubdomains: "true"
-            traefik.frontend.headers.STSPreload: "true"
-            traefik.frontend.passHostHeader: "true"
-            traefik.port: "8069"
+            traefik.http.routers.odootest-unsec.entrypoints: "http"
+            traefik.http.routers.odootest-unsec.middlewares: "https-redirect@file"
+            traefik.http.routers.odootest-unsec.rule: "Host(`{{ odoo_test_url }}`"
+            traefik.http.routers.odootest-unsec.service: "odootest"
 {% if ansible_processor_vcpus > 2 %}
-            traefik.longpolling.port: "8072"
-            traefik.longpolling.frontend.rule:
-                "Host:{{ odoo_test_url }};PathPrefix:/longpolling/"
+            traefik.http.routers.odootest-longpolling.entrypoints: "https"
+            traefik.http.routers.odootest-longpolling.middlewares: "security-headers@file"
+            traefik.http.routers.odootest-longpolling.rule: "Host(`{{ odoo_test_url }}`) && PathPrefix(`/longpolling/`)"
+            traefik.http.routers.odootest-longpolling.service: "odootest-longpolling"
+            traefik.http.routers.odootest-longpolling.tls: "true"
+            traefik.http.routers.odootest-longpolling.tls.certresolver: "le"
+            traefik.http.routers.odootest-longpolling.tls.options: "default@file"
+            traefik.http.services.odootest-longpolling.loadbalancer.server.port: "8072"
 {% endif %}
-            traefik.frontend.headers.customResponseHeaders:
-                "X-Robots-Tag:noindex, nofollow"
-            traefik.dbmanager.frontend.auth.basic.users:
-                "{{ odoo_db_user }}:{{ srv_proxy_pass | password_hash('apr_md5_crypt', 65534 | random(seed=inventory_hostname) | string) | regex_replace('\\$','$$') }}"
-            traefik.dbmanager.frontend.rule:
-                "Host:{{ odoo_test_url }};PathPrefix:/web/database/"
-            traefik.dbselector.frontend.rule:
-                "Host:{{ odoo_test_url }};PathPrefix:/web/database/{p:selector|list}"
-            traefik.websiteinfo.frontend.auth.basic.users:
-                "{{ odoo_db_user }}:{{ srv_proxy_pass | password_hash('apr_md5_crypt', 65534 | random(seed=inventory_hostname) | string) | regex_replace('\\$','$$') }}"
-            traefik.websiteinfo.frontend.rule:
-                "Host:{{ odoo_test_url }};Path:/website/info"
-            traefik.www.frontend.rule: "Host:{{ odoo_test_url }}"
+            traefik.http.routers.odootest-restrict.entrypoints: "https"
+            traefik.http.routers.odootest-restrict.middlewares: "security-headers@file, auth@file"
+            traefik.http.routers.odootest-restrict.rule: "Host(`{{ odoo_test_url }}`) && (PathPrefix(`/web/database/`) || Path(`/website/info`))"
+            traefik.http.routers.odootest-restrict.service: "odootest"
+            traefik.http.routers.odootest-restrict.tls: "true"
+            traefik.http.routers.odootest-restrict.tls.certresolver: "le"
+            traefik.http.routers.odootest-restrict.tls.options: "default@file"
+            traefik.http.routers.odootest.entrypoints: "https"
+            traefik.http.routers.odootest.middlewares: "security-headers@file, norobot-headers@file"
+            traefik.http.routers.odootest.rule: "Host(`{{ odoo_test_url }}`)"
+            traefik.http.routers.odootest.service: "odootest"
+            traefik.http.routers.odootest.tls: "true"
+            traefik.http.routers.odootest.tls.certresolver: "le"
+            traefik.http.routers.odootest.tls.options: "default@file"
+            traefik.http.services.odootest.loadbalancer.server.port: "8069"
         command:
             - odoo
             - --smtp-port=1025
@@ -73,11 +79,14 @@ services:
         labels:
             traefik.docker.network: "inverseproxy_smtp"
             traefik.enable: "true"
-            traefik.frontend.passHostHeader: "true"
-            traefik.port: "8025"
-            traefik.frontend.rule: "Host:{{ odoo_test_url }};PathPrefixStrip:/smtp/"
-            traefik.frontend.auth.basic.users:
-                "{{ odoo_db_user }}:{{ odoo_db_pass | password_hash('apr_md5_crypt', 65534 | random(seed=inventory_hostname) | string) | regex_replace('\\$','$$') }}"
+            traefik.http.routers.odootestsmtp.entrypoints: "https"
+            traefik.http.routers.odootestsmtp.middlewares: "security-headers@file, auth@file, smtp-stripprefix@file"
+            traefik.http.routers.odootestsmtp.rule: "Host(`{{ odoo_test_url }}`) && PathPrefix(`/smtp/`)"
+            traefik.http.routers.odootestsmtp.service: "odootestsmtp"
+            traefik.http.routers.odootestsmtp.tls: "true"
+            traefik.http.routers.odootestsmtp.tls.certresolver: "le"
+            traefik.http.routers.odootestsmtp.tls.options: "default@file"
+            traefik.http.services.odootestsmtp.loadbalancer.server.port: "8025"
 
 networks:
     default:

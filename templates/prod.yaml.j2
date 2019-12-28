@@ -25,27 +25,35 @@ services:
         labels:
             traefik.docker.network: "inverseproxy_shared"
             traefik.enable: "true"
-            traefik.frontend.headers.STSSeconds: "15552000"
-            traefik.frontend.headers.STSIncludeSubdomains: "true"
-            traefik.frontend.headers.STSPreload: "true"
-            traefik.frontend.passHostHeader: "true"
-            traefik.port: "8069"
+            traefik.http.routers.odoo-unsec.entrypoints: "http"
+            traefik.http.routers.odoo-unsec.middlewares: "https-redirect@file"
+            traefik.http.routers.odoo-unsec.rule: "Host(`{{ odoo_url }{% if odoo_url2 is defined %},{{ odoo_url2 }}{% endif %}}`)"
+            traefik.http.routers.odoo-unsec.service: "odoo"
 {% if ansible_processor_vcpus > 2 %}
-            traefik.longpolling.port: "8072"
-            traefik.longpolling.frontend.rule:
-                "Host:{{ odoo_url }}{% if odoo_url2 is defined %},{{ odoo_url2 }}{% endif %};PathPrefix:/longpolling/"
+            traefik.http.routers.odoo-longpolling.entrypoints: "https"
+            traefik.http.routers.odoo-longpolling.middlewares: "security-headers@file"
+            traefik.http.routers.odoo-longpolling.rule: "Host(`{{ odoo_url }}{% if odoo_url2 is defined %},{{ odoo_url2 }}{% endif %}`) && PathPrefix(`/longpolling/`)"
+            traefik.http.routers.odoo-longpolling.service: "odoo-longpolling"
+            traefik.http.routers.odoo-longpolling.tls: "true"
+            traefik.http.routers.odoo-longpolling.tls.certresolver: "le"
+            traefik.http.routers.odoo-longpolling.tls.options: "default@file"
+            traefik.http.services.odoo-longpolling.loadbalancer.server.port: "8072"
 {% endif %}
-            traefik.dbmanager.frontend.auth.basic.users:
-                "{{ odoo_db_user }}:{{ srv_proxy_pass | password_hash('apr_md5_crypt', 65534 | random(seed=inventory_hostname) | string) | regex_replace('\\$','$$') }}"
-            traefik.dbmanager.frontend.rule:
-                "Host:{{ odoo_url }}{% if odoo_url2 is defined %},{{ odoo_url2 }}{% endif %};PathPrefix:/web/database/"
-            traefik.dbselector.frontend.rule:
-                "Host:{{ odoo_url }}{% if odoo_url2 is defined %},{{ odoo_url2 }}{% endif %};PathPrefix:/web/database/{p:selector|list}"
-            traefik.websiteinfo.frontend.auth.basic.users:
-                "{{ odoo_db_user }}:{{ srv_proxy_pass | password_hash('apr_md5_crypt', 65534 | random(seed=inventory_hostname) | string) | regex_replace('\\$','$$') }}"
-            traefik.websiteinfo.frontend.rule:
-                "Host:{{ odoo_url }}{% if odoo_url2 is defined %},{{ odoo_url2 }}{% endif %};Path:/website/info"
-            traefik.www.frontend.rule: "Host:{{ odoo_url }}{% if odoo_url2 is defined %},{{ odoo_url2 }}{% endif %}"
+            traefik.http.routers.odoo-restrict.entrypoints: "https"
+            traefik.http.routers.odoo-restrict.middlewares: "security-headers@file, auth@file"
+            traefik.http.routers.odoo-restrict.rule: "Host(`{{ odoo_url }}{% if odoo_url2 is defined %},{{ odoo_url2 }}{% endif %}`) && (PathPrefix(`/web/database/`) || Path(`/website/info`))"
+            traefik.http.routers.odoo-restrict.service: "odoo"
+            traefik.http.routers.odoo-restrict.tls: "true"
+            traefik.http.routers.odoo-restrict.tls.certresolver: "le"
+            traefik.http.routers.odoo-restrict.tls.options: "default@file"
+            traefik.http.routers.odoo.entrypoints: "https"
+            traefik.http.routers.odoo.middlewares: "security-headers@file"
+            traefik.http.routers.odoo.rule: "Host(`{{ odoo_url }}{% if odoo_url2 is defined %},{{ odoo_url2 }}{% endif %}`)"
+            traefik.http.routers.odoo.service: "odoo"
+            traefik.http.routers.odoo.tls: "true"
+            traefik.http.routers.odoo.tls.certresolver: "le"
+            traefik.http.routers.odoo.tls.options: "default@file"
+            traefik.http.services.odoo.loadbalancer.server.port: "8069"
 
     db:
         image: postgres:{{ odoo_db_version }}-alpine
