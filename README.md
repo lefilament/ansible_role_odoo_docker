@@ -37,7 +37,7 @@ host_root_password: "{{ SERVER_srv_root_pass }}"
 ## Odoo configuration
 # PRODUCTION URL
 odoo_url: "{{ SERVER_odoo_url }}"
-# OPTIONAL EXTRA URL separated by comma (and no space) to be served by proxy
+# OPTIONAL EXTRA URL to be served by proxy
 odoo_url2: "{{ SERVER_odoo_url2 }}"
 # TEST URL
 odoo_test_url: "{{ SERVER_odoo_test_url }}"
