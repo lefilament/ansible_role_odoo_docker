@@ -116,6 +116,29 @@
 #--------------------------------------------------
 # Banking section
 #--------------------------------------------------
+- name: Install Debian OS packages
+  apt: 
+    name: ['python3-pip', 'python-virtualenv']
+    state: latest
+    update_cache: yes
+    force: yes
+    install_recommends: no
+  async: 120
+  poll: 10
+  when: not ansible_check_mode and ansible_os_family == "Debian"
+  tags: odoo_prod, bank
+
+- name: Check Installed Debian OS packages
+  apt: 
+    name: ['python3-pip', 'python-virtualenv']
+    state: latest
+    update_cache: yes
+    force: yes
+    install_recommends: no
+  async: 120
+  poll: 10
+  when: ansible_check_mode and ansible_os_family == "Debian"
+  tags: odoo_prod, bank
 
 - name: Clone Weboob GIT repo
   git: repo="https://git.weboob.org/weboob/devel.git" dest="/root/weboob"
@@ -125,7 +148,8 @@
 
 - name: Install necessary python modules
   pip:
-    name: ['prettytable', 'cssselect', 'html2text', 'unidecode', 'python-dateutil', 'lxml', 'Pillow']
+    name: ['prettytable', 'cssselect', 'html2text', 'unidecode', 'python-dateutil', 'lxml', 'Pillow', 'Babel']
+    executable: /usr/bin/pip3
   when: banking is defined
   tags: odoo_prod, bank
 
