@@ -1,6 +1,9 @@
 version: "2.1"
 services:
     restore_test:
+        build:
+            context: .
+            dockerfile: Dockerfile-odoobak
         image: filament/duplicity:postgres
         hostname: backup-odoo
         domainname: "docker.le-filament.com"
