@@ -108,6 +108,18 @@ services:
             PRE_RESOLVE: 1
         restart: unless-stopped
 
+    lf_gitlab:
+        image: tecnativa/whitelist
+        networks:
+            proxy:
+                aliases:
+                    - "sources.le-filament.com"
+            public:
+        environment:
+            TARGET: "sources.le-filament.com"
+            PRE_RESOLVE: 1
+        restart: unless-stopped
+
     fonts_googleapis_com:
         image: tecnativa/whitelist
         restart: unless-stopped
