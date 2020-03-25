@@ -91,9 +91,6 @@ services:
                 aliases:
                     - "{{ mailserver }}"
             email_public:
-        ports:
-            - "{{ smtpport }}:{{ smtpport }}"
-            - "993:993"
         environment:
             PORT: "443 {{ smtpport }} 993"
             TARGET: "{{ mailserver }}"
