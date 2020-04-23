@@ -12,7 +12,7 @@ You would most probably need to adapt the files in the files/ and templates/ dir
 
 On top of deploying and starting the Odoo instances, the following functionalities are added:
 - automatic bank statement retrieval nightly (using an homemade [Weboob](http://weboob.org) docker and cron jobs to run it every night for each bank account)
-- backup and restore based on duplicity docker from [Tecnativa](https://github.com/Tecnativa/docker-duplicity) which has been customized for our needs to backup on NFS directory and running it every night using cron, keeping only the latest week incremental backups for 1 month
+- backup and restore based on duplicity docker from [Tecnativa](https://github.com/Tecnativa/docker-duplicity) which has been customized for our needs to backup on Swift Storage and running it every night using cron, keeping only the latest week incremental backups for 3 weeks
 - whitelists based on white list docker from [Tecnativa](https://github.com/Tecnativa/docker-whitelist) in order to block any not identified traffic towards the outside of the server
 
 Prior to running this role, you would need to have docker and docker-compose installed on your server and a traefik proxy (which is the purpose of [this role](https://github.com/lefilament/ansible_role_docker_server))
@@ -120,6 +120,16 @@ bank_userid: "{{ SERVER_bank_userid }}"
 bank_account: "{{ SERVER_bank_account }}"
 # Bank account 2
 bank_account2: "{{ SERVER_bank_account2 }}"
+
+## Backup Swift Storage configuration
+swift_username:
+swift_password:
+swift_authurl:
+swift_authversion:
+swift_tenantname:
+swift_tenantid:
+swift_regionname:
+
 ```
 
 # Procedure to restore Odoo from backup
