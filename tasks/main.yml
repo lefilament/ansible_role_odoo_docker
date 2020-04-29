@@ -223,11 +223,11 @@
 - name: Copy docker file for postgres duplicity
   copy:
     src: Dockerfile-backup
-    dest: /home/docker/backups/Dockerfile-odoobak
+    dest: /home/docker/backups/Dockerfile-postgres
     owner: root
     group: root
     mode: 0644
-  when: inventory_hostname in groups['maintenance_contract']
+  when: inventory_hostname in groups.maintenance_contract
 
 - name: PROD copy docker compose for backups
   template:
@@ -236,13 +236,6 @@
     owner: root
     group: root
     mode: 0400
-  when: inventory_hostname in groups.maintenance_contract
-  tags: odoo_prod
-
-- name: PROD remove cron job to mount NFS
-  cron:
-    name: mount nfs for backup odoo
-    state: absent
   when: inventory_hostname in groups.maintenance_contract
   tags: odoo_prod
 

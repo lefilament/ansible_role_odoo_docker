@@ -3,7 +3,7 @@ services:
     backup_odoo:
         build:
             context: .
-            dockerfile: Dockerfile-odoobak
+            dockerfile: Dockerfile-postgres
         image: filament/duplicity:postgres
         hostname: backup-odoo
         domainname: "{{ odoo_url }}"

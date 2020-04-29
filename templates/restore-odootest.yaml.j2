@@ -3,7 +3,7 @@ services:
     restore_test:
         build:
             context: .
-            dockerfile: Dockerfile-odoobak
+            dockerfile: Dockerfile-postgres
         image: filament/duplicity:postgres
         hostname: backup-odoo
         domainname: "docker.le-filament.com"
