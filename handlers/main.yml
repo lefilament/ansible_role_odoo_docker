@@ -1,12 +1,12 @@
 ---
 - name: start odoo docker whitelists
-  docker_service:
+  docker_compose:
     project_src: /home/docker
     files: whitelists.yaml
     project_name: whitelists
 
-- name: build odoo docker test
-  docker_service:
+- name: build odoo_test docker
+  docker_compose:
     project_src: /home/docker/odootest/
     build: yes
     nocache: yes
@@ -17,13 +17,59 @@
   poll: 10
   when: not ansible_check_mode
 
-- name: start odoo docker test
-  docker_service:
+- name: start odoo_test docker
+  docker_compose:
     project_src: /home/docker/odootest/
     remove_orphans: yes
 
+- name: build odoo_dev docker
+  docker_compose:
+    project_src: /home/docker/odoodev/
+    build: yes
+    nocache: yes
+    recreate: always
+    restarted: yes
+    remove_orphans: yes
+  async: 600
+  poll: 10
+  when: not ansible_check_mode
+
+- name: start odoo_dev docker
+  docker_compose:
+    project_src: /home/docker/odoodev/
+    remove_orphans: yes
+
+- name: build odoo_preprod docker
+  docker_compose:
+    project_src: /home/docker/odoopreprod/
+    build: yes
+    nocache: yes
+    recreate: always
+    restarted: yes
+    remove_orphans: yes
+  async: 600
+  poll: 10
+  when: not ansible_check_mode
+
+- name: start odoo_preprod docker
+  docker_compose:
+    project_src: /home/docker/odoopreprod/
+    remove_orphans: yes
+
+- name: build odoo docker prod
+  docker_compose:
+    project_src: /home/docker/odoo/
+    build: yes
+    nocache: yes
+    recreate: always
+    restarted: yes
+    remove_orphans: yes
+  async: 600
+  poll: 10
+  when: not ansible_check_mode
+
 - name: start odoo docker prod
-  docker_service:
+  docker_compose:
     project_src: /home/docker/odoo/
     remove_orphans: yes
 

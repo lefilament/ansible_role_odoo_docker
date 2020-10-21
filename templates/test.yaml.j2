@@ -3,39 +3,45 @@ services:
     odoo:
         build:
             context: ./odoo
-        image: filament/odoo:{{ odoo_image_tag | default(odoo_version) }}
-        container_name: testodoo
+        image: filament/odoo:{{ item.image_version }}
+        container_name: {{ item.dir }}
         depends_on:
             - db
             - smtp
         environment:
-            PGDATABASE: "{{ odoo_db_test }}"
+            PGDATABASE: "{{ item.db }}"
         tty: true
         volumes:
             - filestore:/opt/odoo/data:z
+{% if private_pull is defined %}
+            - ../import/:/import/:ro
+{% endif %}
         networks:
             default:
             inverseproxy_shared:
             whitelists_proxy:
         restart: unless-stopped
         labels:
+            co.elastic.logs/multiline.pattern: '^[0-9]{2}'
+            co.elastic.logs/multiline.negate: 'true'
+            co.elastic.logs/multiline.match: "after"
             traefik.enable: "true"
 {% if ansible_processor_vcpus > 2 %}
-            traefik.http.routers.odootest-longpolling.rule: "Host(`{{ odoo_test_url }}`) && PathPrefix(`/longpolling/`)"
-            traefik.http.routers.odootest-longpolling.service: "odootest-longpolling"
-            traefik.http.services.odootest-longpolling.loadbalancer.server.port: "8072"
+            traefik.http.routers.{{ item.dir }}-longpolling.rule: "Host(`{{ item.url }}`) && PathPrefix(`/longpolling/`)"
+            traefik.http.routers.{{ item.dir }}-longpolling.service: "{{ item.dir }}-longpolling"
+            traefik.http.services.{{ item.dir }}-longpolling.loadbalancer.server.port: "8072"
 {% endif %}
-            traefik.http.routers.odootest-restrict.middlewares: "auth@file"
-            traefik.http.routers.odootest-restrict.rule: "Host(`{{ odoo_test_url }}`) && (PathPrefix(`/web/database/`) || Path(`/website/info`))"
-            traefik.http.routers.odootest-restrict.service: "odootest"
-            traefik.http.routers.odootest.middlewares: "norobot-headers@file"
-            traefik.http.routers.odootest.rule: "Host(`{{ odoo_test_url }}`)"
-            traefik.http.routers.odootest.service: "odootest"
-            traefik.http.services.odootest.loadbalancer.server.port: "8069"
+            traefik.http.routers.{{ item.dir }}-restrict.middlewares: "auth@file"
+            traefik.http.routers.{{ item.dir }}-restrict.rule: "Host(`{{ item.url }}`) && Path(`/website/info`, `/web/database/{p:manager|create|duplicate|drop|backup|restore|change_password}`)"
+            traefik.http.routers.{{ item.dir }}-restrict.service: "{{ item.dir }}"
+            traefik.http.routers.{{ item.dir }}.middlewares: "norobot-headers@file"
+            traefik.http.routers.{{ item.dir }}.rule: "Host(`{{ item.url }}`)"
+            traefik.http.routers.{{ item.dir }}.service: "{{ item.dir }}"
+            traefik.http.services.{{ item.dir }}.loadbalancer.server.port: "8069"
         command:
             - odoo
             - --smtp-port=1025
-            - --database={{ odoo_db_test }}
+            - --database={{ item.db }}
 {% if ansible_processor_vcpus > 2 %}
             - --workers=2
             - --max-cron-threads=1
@@ -43,17 +49,19 @@ services:
 
     db:
         image: postgres:{{ odoo_db_version }}-alpine
-        container_name: testodoo_db
+        container_name: {{ item.dir }}_db
         environment:
-            POSTGRES_USER: "{{ odoo_db_user }}"
-            POSTGRES_PASSWORD: "{{ odoo_db_pass }}"
+            POSTGRES_USER: "{{ item.db_user }}"
+            POSTGRES_PASSWORD: "{{ item.db_pass }}"
+        labels:
+            co.elastic.logs/module: postgresql
         volumes:
             - db:/var/lib/postgresql/data:z
         restart: unless-stopped
 
     smtp:
         image: mailhog/mailhog
-        container_name: testodoo_smtp
+        container_name: {{ item.dir }}_smtp
         restart: unless-stopped
         networks:
             default:
@@ -61,10 +69,28 @@ services:
         labels:
             traefik.docker.network: "inverseproxy_smtp"
             traefik.enable: "true"
-            traefik.http.routers.odootestsmtp.middlewares: "auth@file, smtp-stripprefix@file"
-            traefik.http.routers.odootestsmtp.rule: "Host(`{{ odoo_test_url }}`) && PathPrefix(`/smtp/`)"
-            traefik.http.routers.odootestsmtp.service: "odootestsmtp"
-            traefik.http.services.odootestsmtp.loadbalancer.server.port: "8025"
+            traefik.http.routers.{{ item.dir }}smtp.middlewares: "auth@file, smtp-stripprefix@file"
+            traefik.http.routers.{{ item.dir }}smtp.rule: "Host(`{{ item.url }}`) && PathPrefix(`/smtp/`)"
+            traefik.http.routers.{{ item.dir }}smtp.service: "{{ item.dir }}smtp"
+            traefik.http.services.{{ item.dir }}smtp.loadbalancer.server.port: "8025"
+{% if sso_url is defined %}
+
+    sso:
+        image: tecnativa/whitelist
+        container_name: {{ item.dir }}_sso
+        labels:
+            co.elastic.logs/enabled: "false"
+        networks:
+            whitelists_proxy:
+                aliases:
+                    - "{{ sso_url }}"
+            whitelists_public:
+        environment:
+            PORT: "443"
+            TARGET: "{{ sso_url }}"
+            PRE_RESOLVE: 1
+        restart: unless-stopped
+{% endif %}
 
 networks:
     default:
@@ -77,6 +103,10 @@ networks:
         external: true
     whitelists_proxy:
         external: true
+{% if sso_url is defined %}
+    whitelists_public:
+        external: true
+{% endif %}
 
 volumes:
     filestore:

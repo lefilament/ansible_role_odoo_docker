@@ -1,4 +1,4 @@
-{% for repo in odoo_other_modules | default([]) | sort %}
+{% for repo in item.other_modules | default([]) | sort(attribute='url') %}
 {{ repo.url }}:
 {% if repo.branch is defined %}
     branch: "{{ repo.branch }}"
@@ -10,7 +10,7 @@
         - {{ modules }}
 {% endfor %}
 {% endfor %}
-{% for repo in odoo_custom_modules_oca | default([]) | sort %}
+{% for repo in item.custom_modules_oca | default([]) | sort(attribute='repo') %}
 https://github.com/OCA/{{ repo.repo }}.git:
 {% if repo.branch is defined %}
     branch: "{{ repo.branch }}"

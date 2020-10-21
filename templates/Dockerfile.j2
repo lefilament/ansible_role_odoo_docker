@@ -1,7 +1,12 @@
-FROM lefilament/odoo:{{ odoo_version }}
+FROM lefilament/odoo:{{ odoo_version }}{% if odoo_multilingual is defined and odoo_multilingual %}_ml{% endif %}
+
 MAINTAINER Le Filament <https://le-filament.com>
 
 USER root 
+{% if odoo_pip_packages is defined %}
+# Install pip packages
+RUN pip install {{ odoo_pip_packages }}
+{% endif %}
 {% if git_private_keys is defined %}
 # Install private keys
 COPY ./id_rsa ~root/.ssh/

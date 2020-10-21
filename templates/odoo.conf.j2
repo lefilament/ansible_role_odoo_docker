@@ -1,14 +1,25 @@
 [options]
 addons_path = /opt/odoo/odoo/addons,/opt/odoo/additional_addons,/opt/odoo/private_addons
 data_dir = /opt/odoo/data
-admin_passwd = {{ odoo_master_pass }}
+{% if odoo_prod is defined %}
+admin_passwd = {{ odoo_prod.master_pass }}
 ; csv_internal_sep = ,
 ; db_maxconn = 64
-db_name = {{ odoo_db }}
-db_password = {{ odoo_db_pass }}
+db_name = {{ odoo_prod.db }}
+db_password = {{ odoo_prod.db_pass }}
 ; db_template = template1
 ; dbfilter = .*
-db_user = {{ odoo_db_user }}
+db_user = {{ odoo_prod.db_user }}
+{% else %}
+admin_passwd = {{ item.master_pass }}
+; csv_internal_sep = ,
+; db_maxconn = 64
+db_name = {{ item.db }}
+db_password = {{ item.db_pass }}
+; db_template = template1
+; dbfilter = .*
+db_user = {{ item.db_user }}
+{% endif %}
 ; debug_mode = False
 ; email_from = False
 ; limit_memory_hard = 2684354560

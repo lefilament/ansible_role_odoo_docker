@@ -1,27 +1,23 @@
 version: "2.1"
 services:
     backup_odoo:
-        build:
-            context: .
-            dockerfile: Dockerfile-postgres
-        image: filament/duplicity:postgres
+        image: tecnativa/duplicity:postgres
         hostname: backup-odoo
-        domainname: "{{ odoo_url }}"
         environment:
             DST: "swift://odoo_{{ inventory_hostname|lower }}"
-            PGDATABASE: "{{ odoo_db }}"
-            PGUSER: "{{ odoo_db_user }}"
-            PGPASSWORD: "{{ odoo_db_pass }}"
-            PASSPHRASE: "{{ odoo_master_pass }}"
-            SWIFT_USERNAME: "{{ swift_username }}"
-            SWIFT_PASSWORD: "{{ swift_password }}"
-            SWIFT_AUTHURL: "{{ swift_authurl }}"
-            SWIFT_AUTHVERSION: {{ swift_authversion }}
-            SWIFT_TENANTNAME: "{{ swift_tenantname }}"
-            SWIFT_TENANTID: "{{ swift_tenantid }}"
-            SWIFT_REGIONNAME: "{{ swift_regionname }}"
+            PGDATABASE: "{{ odoo_prod.db }}"
+            PGUSER: "{{ odoo_prod.db_user }}"
+            PGPASSWORD: "{{ odoo_prod.db_pass }}"
+            PASSPHRASE: "{{ odoo_prod.master_pass }}"
+            SWIFT_USERNAME: "{{ swift_odoo_username }}"
+            SWIFT_PASSWORD: "{{ swift_odoo_password }}"
+            SWIFT_AUTHURL: "{{ swift_odoo_authurl }}"
+            SWIFT_AUTHVERSION: {{ swift_odoo_authversion }}
+            SWIFT_TENANTNAME: "{{ swift_odoo_tenantname }}"
+            SWIFT_TENANTID: "{{ swift_odoo_tenantid }}"
+            SWIFT_REGIONNAME: "{{ swift_odoo_regionname }}"
             JOB_200_WHAT: "pg_dump --no-owner --format c --file $$SRC/$$PGDATABASE.pgdump"
-            JOB_300_WHAT: "backup --full-if-older-than 6D"
+            JOB_300_WHAT: "backup --full-if-older-than 6D --allow-source-mismatch"
             JOB_301_WHAT: "dup remove-all-inc-of-but-n-full 1 --force $$DST $$@"
             JOB_301_WHEN: "daily"
             JOB_302_WHAT: "dup remove-all-but-n-full 4 --force $$DST $$@"
@@ -36,8 +32,6 @@ services:
 
 networks:
     odoo_default:
-        driver_opts:
-            encrypted: 1
         external: true
     public:
         driver_opts:

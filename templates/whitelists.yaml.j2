@@ -1,8 +1,11 @@
 version: "2.1"
 services:
+{% if inventory_hostname != "Filament_Dedicated" %}
     accounts_google_com:
         image: tecnativa/whitelist
         restart: unless-stopped
+        labels:
+            co.elastic.logs/enabled: "false"
         networks:
             proxy:
                 aliases:
@@ -15,6 +18,8 @@ services:
     cdnjs_cloudflare_com:
         image: tecnativa/whitelist
         restart: unless-stopped
+        labels:
+            co.elastic.logs/enabled: "false"
         networks:
             proxy:
                 aliases:
@@ -27,6 +32,8 @@ services:
     www_google_com:
         image: tecnativa/whitelist
         restart: unless-stopped
+        labels:
+            co.elastic.logs/enabled: "false"
         networks:
             proxy:
                 aliases:
@@ -39,6 +46,8 @@ services:
     www_googleapis_com:
         image: tecnativa/whitelist
         restart: unless-stopped
+        labels:
+            co.elastic.logs/enabled: "false"
         networks:
             proxy:
                 aliases:
@@ -51,6 +60,8 @@ services:
     www_gravatar_com:
         image: tecnativa/whitelist
         restart: unless-stopped
+        labels:
+            co.elastic.logs/enabled: "false"
         networks:
             proxy:
                 aliases:
@@ -60,6 +71,7 @@ services:
             TARGET: "www.gravatar.com"
             PRE_RESOLVE: 1
 
+{% endif %}
     openstreetmap:
         image: tecnativa/whitelist
         networks:
@@ -70,6 +82,8 @@ services:
         environment:
             TARGET: "nominatim.openstreetmap.org"
             PRE_RESOLVE: 1
+        labels:
+            co.elastic.logs/enabled: "false"
         restart: unless-stopped
 
     sirene:
@@ -82,6 +96,8 @@ services:
         environment:
             TARGET: "data.opendatasoft.com"
             PRE_RESOLVE: 1
+        labels:
+            co.elastic.logs/enabled: "false"
         restart: unless-stopped
 
     github:
@@ -94,6 +110,8 @@ services:
         environment:
             TARGET: "github.com"
             PRE_RESOLVE: 1
+        labels:
+            co.elastic.logs/enabled: "false"
         restart: unless-stopped
 
     bitbucket:
@@ -106,9 +124,11 @@ services:
         environment:
             TARGET: "bitbucket.org"
             PRE_RESOLVE: 1
+        labels:
+            co.elastic.logs/enabled: "false"
         restart: unless-stopped
 
-    lf_gitlab:
+    gitlab:
         image: tecnativa/whitelist
         networks:
             proxy:
@@ -118,11 +138,15 @@ services:
         environment:
             TARGET: "sources.le-filament.com"
             PRE_RESOLVE: 1
+        labels:
+            co.elastic.logs/enabled: "false"
         restart: unless-stopped
 
     fonts_googleapis_com:
         image: tecnativa/whitelist
         restart: unless-stopped
+        labels:
+            co.elastic.logs/enabled: "false"
         networks:
             proxy:
                 aliases:
@@ -135,6 +159,8 @@ services:
     fonts_gstatic_com:
         image: tecnativa/whitelist
         restart: unless-stopped
+        labels:
+            co.elastic.logs/enabled: "false"
         networks:
             proxy:
                 aliases:

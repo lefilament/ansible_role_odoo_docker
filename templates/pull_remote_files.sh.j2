@@ -1,0 +1,11 @@
+#!/bin/bash
+  
+# Copyright © 2019 Le Filament (<http://www.le-filament.com>)
+# License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
+
+sftp {{ private_user }}@{{ private_server }} << COMMANDS
+get {{ private_rpath }}{{ private_rfname }} /home/docker/import/
+quit
+COMMANDS
+
+mv -f `ls -Art /home/docker/import/{{ private_rfname }} | tail -n 1` /home/docker/import/{{ private_lfname }}
