@@ -31,79 +31,116 @@ ansible_ssh_host: "{{ SERVER_srv_ip }}"
 host_user: "{{ SERVER_srv_user }}"
 # User password
 host_password: "{{ SERVER_srv_pass }}"
-# Root password
-host_root_password: "{{ SERVER_srv_root_pass }}"
+# Admin User
+host_admin_user: "{{ SERVER_srv_admin_user }}"
+# Admin password
+host_admin_password: "{{ SERVER_srv_admin_pass }}"
+
+# OPTIONAL 2nd USER
+# host_user2: "{{ SERVER_srv_user2 }}"
+# host_password2: "{{ SERVER_srv_pass2 }}"
+# host_user2_pubkey: "{{ SERVER_srv_user2_pubkey }}"
+
+# password for proxy protected pages
+srv_proxy_pass: "{{ SERVER_srv_proxy_pass }}"
+
+## SFTP user to connect to Backup server
+backup_sftp_user: "{{ SERVER_backup_sftp_user }}"
 
 ## Odoo configuration
-# PRODUCTION URL
-odoo_url: "{{ SERVER_odoo_url }}"
-# OPTIONAL EXTRA URL to be served by proxy
-odoo_url2: "{{ SERVER_odoo_url2 }}"
-# TEST URL
-odoo_test_url: "{{ SERVER_odoo_test_url }}"
+  
+# By default, an Odoo server is deployed with both prod and test instances.
+# By default, all variables for test instance are copied from prod one, but URL and database name
+odoo_prod:
+    # PROD URL
+    url: "{{ SERVER_odoo_url }}"
+    master_pass: "{{ SERVER_odoo_master_pass }}"
+    # Database identifiers user and password
+    db_user: "{{ SERVER_odoo_db_user }}"
+    db_pass: "{{ SERVER_odoo_db_pass }}"
+    # PROD Database name
+    db: "{{ SERVER_odoo_db_name }}"
+    # Image name to be generated (default = odoo_version)
+    image_version: "{{ odoo_version }}"
+    # Custom modules Le Filament (one module per repo)
+    custom_modules:
+     - automatic_bank_statement_import
+     - lefilament_account
+     - lefilament_export_journal
+     - lefilament_generic_reports
+    # Custom modules Le Filament (one module per repo and branch is specified instead of taking odoo_version by default)
+    custom_modules_branch:
+     - repo: lefilament_account
+       branch: "{{ odoo_version }}"
+    # OCA modules - these should be limited to the ones not already defined
+    # in groups_vars/docker_odoo in default_odoo_custom_modules_oca (since these
+    # are already part of lefilament/odoo:10.0 and 12.0 dockers)
+    custom_modules_oca:
+      - repo: server-tools
+        modules:
+         - auto_backup
+      - repo: knowledge
+        modules:
+         - document_page_approval
+      - repo: social
+        modules:
+         - mail_attach_existing_attachment
+      - repo: website-cms
+        modules:
+         - cms_delete_content
+         - cms_form
+         - cms_info
+         - cms_status_message
+    # Other Odoo modules where git repo is the module
+    other_repos:
+     - repo: filament
+       url: git@github.com:lefilament/link_sale_project_tasks.git
+    # Other Odoo modules where git repo contains various modules
+    other_modules:
+     - repo: filament
+       url: https://github.com/lefilament/bank-statement-import.git
+       branch: 12.0-mig-account_bank_statement_import_ofx
+       modules:
+         - account_bank_statement_import_ofx
 
-# Odoo version
-odoo_version: "10.0"
-# Postgresql version
-odoo_db_version: "10"
+odoo_nonprod_instances:
+      - name: odoo_test
+        # Directory where this test instance will be installed on server
+        dir: "odootest"
+        # TEST URL
+        url: "{{ SERVER_odoo_test_url }}"
+        # OPTIONAL for when prod instance not deployed on server
+        # Hostname of server where prod server is installed (required for retrieving prod database on test ones)
+        prod_inv_name: SERVER
+        master_pass: "{{ odoo_prod.master_pass }}"
+        db_user: "{{ odoo_prod.db_user }}"
+        db_pass: "{{ odoo_prod.db_pass }}"
+        # TEST Database Name
+        db: "{{ SERVER_odoo_db_name_test }}"
+        image_version: "{{ odoo_image_tag | default(odoo_version) }}"
+        custom_modules: "{{ odoo_prod.custom_modules | default([]) }}"
+        custom_modules_branch: "{{ odoo_prod.custom_modules_branch | default([]) }}"
+        custom_modules_oca: "{{ odoo_prod.custom_modules_oca | default([]) }}"
+        other_repos: "{{ odoo_prod.other_repos | default([]) }}"
+        other_modules: "{{ odoo_prod.other_modules | default([]) }}"
 
-# Odoo master password
-odoo_master_pass: "{{ SERVER_odoo_master_pass }}"
-# password for proxy protected pages
-srv_proxy_pass: "{{ SERVER_srv_proxy_bcpass }}"
+# OPTIONAL - Odoo multilingual - Will install Odoo with all languages (English and French only if set to no)
+odoo_multilingual: no
 
-# Odoo database user
-odoo_db_user: "{{ SERVER_odoo_db_user }}"
-# Odoo database password
-odoo_db_pass: "{{ SERVER_odoo_db_pass }}"
-# Odoo PROD database name
-odoo_db: "{{ SERVER_odoo_db_name }}"
-# Odoo TEST database name
-odoo_db_test: "{{ SERVER_odoo_db_name_test }}"
 
-# Custom modules
-odoo_custom_modules:
- - lefilament_link_sale_project
- - lefilament_projets
-
-odoo_other_modules:
- - repo: elico
-   url: https://github.com/Elico-Corp/odoo-addons.git
-   modules:
-     - auth_cas
-
-# OCA modules - these should be limited to the ones not already defined [here](https://github.com/lefilament/ansible/blob/master/group_vars/docker_odoo)
-# in default_odoo_custom_modules_oca (since these are already part of lefilament/odoo:10.0 docker)
-odoo_custom_modules_oca:
-  - repo: server-tools
-    modules:
-     - auto_backup
-  - repo: knowledge
-    modules:
-     - document_page_approval
-  - repo: social
-    modules:
-     - mail_attach_existing_attachment
-  - repo: website-cms
-    modules:     
-     - cms_delete_content
-     - cms_form
-     - cms_info
-     - cms_status_message
-
-## Mail server configuration - for Odoo
+## OPTIONAL - Mail server configuration - for Odoo
 # Mail domain
 mailname: "{{ SERVER_mail_domain }}"
 # Mail server
 mailserver: "{{ SERVER_mail_srv_url }}"
 # SMTP port
-smtpport: "{{ SERVER_mail_smtp_port }}"
+smtpport: 465
 # SMTP user
 smtpuser: "{{ SERVER_mail_odoo_user }}"
 # SMTP password
 smtppass: "{{ SERVER_mail_odoo_pass }}"
 
-## Bank configuration - for Odoo automatic retrieval of statements
+## OPTIONAL - Bank configuration - for Odoo automatic retrieval of statements
 # Should auto retrieval be activated ?
 banking: yes
 # Bank name
@@ -121,14 +158,18 @@ bank_account: "{{ SERVER_bank_account }}"
 # Bank account 2
 bank_account2: "{{ SERVER_bank_account2 }}"
 
+# OPTIONAL - GIT private keys - for retrieving private repos (outside Le Filament ones)
+git_private_keys: "{{ SERVER_git_private_keys }}"
+
+
 ## Backup Swift Storage configuration
-swift_username:
-swift_password:
-swift_authurl:
-swift_authversion:
-swift_tenantname:
-swift_tenantid:
-swift_regionname:
+swift_odoo_username:
+swift_odoo_password:
+swift_odoo_authurl:
+swift_odoo_authversion:
+swift_odoo_tenantname:
+swift_odoo_tenantid:
+swift_odoo_regionname:
 
 ```
 
@@ -138,7 +179,7 @@ In order to restore Owncloud database and files from backup, it is necessary to 
 `docker-compose -f backup-odoo.yaml run --rm backup_odoo sh -c "restore --force && createdb -T template0 \$PGDATABASE && pg_restore -d \$PGDATABASE \$SRC/\$PGDATABASE.pgdump"`
 
 
-You can also copy production database inside test one, first delete the database from test instance (from Odoo test interface URL/web/database/manager) then change directory to /home/docker/backups and run the following command:
+You can also copy production database inside test one, be careful with that command that will delete test database at first : change directory to /home/docker/backups and run the following command:
 `docker-compose -f restore-odootest.yaml run --rm restore_test`
 
 
