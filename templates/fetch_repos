@@ -23,9 +23,6 @@ if os.path.isfile(REPO_FILE):
             call(["git", "clone", "-b", repos[repo]["branch"], "--depth", "1", repos[repo]["url"],
                   DEFAULT_PRIVATE_REPO+"/"+repo])
 
-        for root, dirs, files in os.walk(DEFAULT_PRIVATE_REPO):
-            for target in dirs + files:
-                os.chown(os.path.join(root, target), UID, GID)
 {% if odoo_version == 10.0 %}
         if os.path.isdir("/opt/odoo/private_addons/lf_theme"):
             if not os.path.isfile("/opt/odoo/private_addons/lf_theme/static\

@@ -32,7 +32,4 @@ if os.path.isfile(REPO_ADDON_FILE):
                 shutil.move("/tmp/addon"+repo+"/"+module,
                             DEFAULT_PRIVATE_REPO+"/"+module)
 
-        for root, dirs, files in os.walk(DEFAULT_PRIVATE_REPO):
-            for target in dirs + files:
-                os.chown(os.path.join(root, target), UID, GID)
         shutil.rmtree("/tmp/addon")

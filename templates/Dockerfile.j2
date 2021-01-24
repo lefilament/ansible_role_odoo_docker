@@ -1,23 +1,26 @@
-FROM lefilament/odoo:{{ odoo_version }}{% if odoo_multilingual is defined and odoo_multilingual %}_ml{% endif %}
-
-MAINTAINER Le Filament <https://le-filament.com>
-
-USER root 
-{% if odoo_pip_packages is defined %}
-# Install pip packages
-RUN pip install {{ odoo_pip_packages }}
-{% endif %}
+## Image to get git repos
+FROM lefilament/odoo:{{ odoo_version }}{% if odoo_multilingual is defined and odoo_multilingual %}_ml{% endif %} as odoo_addons
+LABEL stage=builder
+USER root
 {% if git_private_keys is defined %}
 # Install private keys
 COPY ./id_rsa ~root/.ssh/
 {% endif %}
 # Install private repos
 COPY ./private/* /opt/odoo/private/
+RUN chown -R root:root /opt/odoo/additional_addons /opt/odoo/private_addons
 RUN /opt/odoo/private/fetch_repos_addons
 RUN /opt/odoo/private/fetch_repos
 
+## Final image
+FROM lefilament/odoo:{{ odoo_version }}{% if odoo_multilingual is defined and odoo_multilingual %}_ml{% endif %} as final
+USER root
+COPY --from=odoo_addons --chown=odoo:odoo /opt/odoo/private_addons /opt/odoo/private_addons
+COPY --from=odoo_addons --chown=odoo:odoo /opt/odoo/additional_addons /opt/odoo/additional_addons
+{% if odoo_pip_packages is defined %}
+# Install pip packages
+RUN pip install {{ odoo_pip_packages }}
+{% endif %}
 # Copy Odoo configuration file
-COPY ./odoo.conf /opt/odoo/etc/odoo.conf
-RUN chown odoo:odoo /opt/odoo/etc/odoo.conf
-
+COPY --chown=odoo:odoo ./odoo.conf /opt/odoo/etc/odoo.conf
 USER odoo

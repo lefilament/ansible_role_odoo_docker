@@ -73,23 +73,25 @@ services:
             traefik.http.routers.{{ item.dir }}smtp.rule: "Host(`{{ item.url }}`) && PathPrefix(`/smtp/`)"
             traefik.http.routers.{{ item.dir }}smtp.service: "{{ item.dir }}smtp"
             traefik.http.services.{{ item.dir }}smtp.loadbalancer.server.port: "8025"
-{% if sso_url is defined %}
+{% if item.extra_urls is defined %}
+{% for url in item.extra_urls %}
 
-    sso:
+    {{ url }}:
         image: tecnativa/whitelist
-        container_name: {{ item.dir }}_sso
+        container_name: {{ item.dir }}_{{ url }}
         labels:
             co.elastic.logs/enabled: "false"
         networks:
             whitelists_proxy:
                 aliases:
-                    - "{{ sso_url }}"
+                    - "{{ url }}"
             whitelists_public:
         environment:
             PORT: "443"
-            TARGET: "{{ sso_url }}"
+            TARGET: "{{ url }}"
             PRE_RESOLVE: 1
         restart: unless-stopped
+{% endfor %}
 {% endif %}
 
 networks:

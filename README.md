@@ -102,6 +102,8 @@ odoo_prod:
        branch: 12.0-mig-account_bank_statement_import_ofx
        modules:
          - account_bank_statement_import_ofx
+    extra_urls:
+      - "sso.le-filament.com"
 
 odoo_nonprod_instances:
       - name: odoo_test
@@ -123,6 +125,8 @@ odoo_nonprod_instances:
         custom_modules_oca: "{{ odoo_prod.custom_modules_oca | default([]) }}"
         other_repos: "{{ odoo_prod.other_repos | default([]) }}"
         other_modules: "{{ odoo_prod.other_modules | default([]) }}"
+        extra_urls:
+          - "sso.le-filament.com"
 
 # OPTIONAL - Odoo multilingual - Will install Odoo with all languages (English and French only if set to no)
 odoo_multilingual: no

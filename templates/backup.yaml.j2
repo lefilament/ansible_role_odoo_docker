@@ -18,9 +18,7 @@ services:
             SWIFT_REGIONNAME: "{{ swift_odoo_regionname }}"
             JOB_200_WHAT: "pg_dump --no-owner --format c --file $$SRC/$$PGDATABASE.pgdump"
             JOB_300_WHAT: "backup --full-if-older-than 6D --allow-source-mismatch"
-            JOB_301_WHAT: "dup remove-all-inc-of-but-n-full 1 --force $$DST $$@"
-            JOB_301_WHEN: "daily"
-            JOB_302_WHAT: "dup remove-all-but-n-full 4 --force $$DST $$@"
+            JOB_302_WHAT: "dup remove-all-but-n-full 5 --force $$DST $$@"
             JOB_302_WHEN: "daily"
         volumes:
             - odoo_filestore:/mnt/backup/src/odoo:z

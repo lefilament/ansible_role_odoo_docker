@@ -111,23 +111,25 @@ services:
         container_name: odoo_smtp
         restart: unless-stopped
 {% endif %}
-{% if sso_url is defined %}
+{% if odoo_prod.extra_urls is defined %}
+{% for url in odoo_prod.extra_urls %}
 
-    sso:
+    {{ url }}:
         image: tecnativa/whitelist
-        container_name: odoo_sso
+        container_name: odoo_{{ url }}
         labels:
             co.elastic.logs/enabled: "false"
         networks:
             whitelists_proxy:
                 aliases:
-                    - "{{ sso_url }}"
+                    - "{{ url }}"
             whitelists_public:
         environment:
             PORT: "443"
-            TARGET: "{{ sso_url }}"
+            TARGET: "{{ url }}"
             PRE_RESOLVE: 1
         restart: unless-stopped
+{% endfor %}
 {% endif %}
 
 networks:
@@ -139,9 +141,10 @@ networks:
         external: true
     whitelists_proxy:
         external: true
-{% if sso_url is defined %}
+{% if odoo_prod.extra_urls is defined %}
     whitelists_public:
         external: true
+{% endif %}
 {% endif %}
 {% if mailname is defined %}
     email_proxy:
