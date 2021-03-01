@@ -26,7 +26,7 @@ This role is included in [Le Filament full Ansible playbook](https://github.com/
 ```json
 ## Ansible configuration for connecting to remote host
 # IP address
-ansible_ssh_host: "{{ SERVER_srv_ip }}"
+ansible_host: "{{ SERVER_srv_ip }}"
 # User
 host_user: "{{ SERVER_srv_user }}"
 # User password
