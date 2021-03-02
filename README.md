@@ -52,7 +52,7 @@ backup_sftp_user: "{{ SERVER_backup_sftp_user }}"
 # By default, an Odoo server is deployed with both prod and test instances.
 # By default, all variables for test instance are copied from prod one, but URL and database name
 odoo_prod:
-    # PROD URL
+    # PROD URL (only sub.domain without https:// in front)
     url: "{{ SERVER_odoo_url }}"
     master_pass: "{{ SERVER_odoo_master_pass }}"
     # Database identifiers user and password
@@ -102,6 +102,7 @@ odoo_prod:
        branch: 12.0-mig-account_bank_statement_import_ofx
        modules:
          - account_bank_statement_import_ofx
+    # Other URLs that should be allowed connecting to (only sub.domain without https:// in front)
     extra_urls:
       - "sso.le-filament.com"
 
@@ -109,7 +110,7 @@ odoo_nonprod_instances:
       - name: odoo_test
         # Directory where this test instance will be installed on server
         dir: "odootest"
-        # TEST URL
+        # TEST URL (only sub.domain without https:// in front)
         url: "{{ SERVER_odoo_test_url }}"
         # OPTIONAL for when prod instance not deployed on server
         # Hostname of server where prod server is installed (required for retrieving prod database on test ones)
@@ -125,6 +126,7 @@ odoo_nonprod_instances:
         custom_modules_oca: "{{ odoo_prod.custom_modules_oca | default([]) }}"
         other_repos: "{{ odoo_prod.other_repos | default([]) }}"
         other_modules: "{{ odoo_prod.other_modules | default([]) }}"
+        # Other URLs that should be allowed connecting to (only sub.domain without https:// in front)
         extra_urls:
           - "sso.le-filament.com"
 
