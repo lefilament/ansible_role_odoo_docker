@@ -1,6 +1,5 @@
 version: "2.1"
 services:
-{% if inventory_hostname != "Filament_Dedicated" %}
     accounts_google_com:
         image: tecnativa/whitelist
         restart: unless-stopped
@@ -71,7 +70,6 @@ services:
             TARGET: "www.gravatar.com"
             PRE_RESOLVE: 1
 
-{% endif %}
     openstreetmap:
         image: tecnativa/whitelist
         networks:
