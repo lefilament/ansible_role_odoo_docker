@@ -1,0 +1,24 @@
+{% for repo in odoo_prod.other_modules | default([]) | sort(attribute='url') %}
+{{ repo.url }}:
+{% if repo.branch is defined %}
+    branch: "{{ repo.branch }}"
+{% else %}
+    branch: "{{ odoo_version }}"
+{% endif %}
+    modules:
+{% for modules in repo.modules | sort %}
+        - {{ modules }}
+{% endfor %}
+{% endfor %}
+{% for repo in odoo_prod.custom_modules_oca | default([]) | sort(attribute='repo') %}
+https://github.com/OCA/{{ repo.repo }}.git:
+{% if repo.branch is defined %}
+    branch: "{{ repo.branch }}"
+{% else %}
+    branch: "{{ odoo_version }}"
+{% endif %}
+    modules:
+{% for modules in repo.modules | sort %}
+        - {{ modules }}
+{% endfor %}
+{% endfor %}

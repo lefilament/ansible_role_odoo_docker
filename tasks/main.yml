@@ -187,8 +187,8 @@
     group: root
     mode: '0644'
   with_items:
-    - repos.yaml
-    - repos-addons.yaml
+    - prod-repos.yaml
+    - prod-repos-addons.yaml
   when: odoo_nonprod_instances is not defined and odoo_prod is defined
   notify: build odoo docker prod
   tags: odoo_prod

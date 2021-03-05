@@ -1,0 +1,23 @@
+{% for repo in odoo_prod.custom_modules | default([]) | sort %}
+{{ repo | basename }}:
+    url: "git@sources.le-filament.com:lefilament/{{ repo }}.git"
+    branch: "{{ odoo_version }}"
+{% endfor %}
+{% for repo in odoo_prod.custom_modules_branch | default([]) | sort(attribute='repo') %}
+{{ repo.repo | basename }}: 
+    url: "git@sources.le-filament.com:lefilament/{{ repo.repo }}.git"
+{% if repo.branch is defined %}
+    branch: "{{ repo.branch }}"
+{% else %}
+    branch: "{{ odoo_version }}"
+{% endif %}
+{% endfor %}
+{% for repo in odoo_prod.other_repos | default([]) | sort(attribute='repo') %}
+{{ repo.repo }}: 
+    url: {{ repo.url }}
+{% if repo.branch is defined %}
+    branch: "{{ repo.branch }}"
+{% else %}
+    branch: "{{ odoo_version }}"
+{% endif %}
+{% endfor %}
