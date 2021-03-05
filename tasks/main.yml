@@ -179,16 +179,28 @@
   notify: build odoo docker prod
   tags: odoo_prod
 
-- name: PROD set {{ item }} variables from template
+- name: PROD set repos variables from template
   template:
-    src: "{{ item }}.j2"
-    dest: "/home/docker/odoo/odoo/private/{{ item }}"
+    src: "repos.yaml.j2"
+    dest: "/home/docker/odoo/odoo/private/repos.yaml"
     owner: root
     group: root
     mode: '0644'
-  with_items:
-    - repos.yaml
-    - repos-addons.yaml
+  vars:
+    item: "{{ odoo_prod }}"
+  when: odoo_nonprod_instances is not defined and odoo_prod is defined
+  notify: build odoo docker prod
+  tags: odoo_prod
+
+- name: PROD set repos-addons variables from template
+  template:
+    src: "repos-addons.yaml.j2"
+    dest: "/home/docker/odoo/odoo/private/repos-addons.yaml"
+    owner: root
+    group: root
+    mode: '0644'
+  vars:
+    item: "{{ odoo_prod }}"
   when: odoo_nonprod_instances is not defined and odoo_prod is defined
   notify: build odoo docker prod
   tags: odoo_prod
@@ -230,7 +242,7 @@
 # Banking section
 #--------------------------------------------------
 - name: Install Debian OS packages
-  apt: 
+  apt:
     name: ['python3-pip', 'python3-virtualenv', 'python3-setuptools']
     state: latest
     update_cache: yes
@@ -242,7 +254,7 @@
   tags: odoo_prod, bank
 
 - name: Check Installed Debian OS packages
-  apt: 
+  apt:
     name: ['python3-pip', 'python3-virtualenv', 'python3-setuptools']
     state: latest
     update_cache: yes
@@ -261,6 +273,7 @@
   pip:
     name: ['prettytable', 'cssselect', 'html2text', 'unidecode', 'python-dateutil', 'lxml', 'Pillow', 'Babel', 'pyyaml', 'requests']
     executable: /usr/bin/pip3
+    state: latest
   when: banking is defined and odoo_prod is defined
   tags: odoo_prod, bank
 
