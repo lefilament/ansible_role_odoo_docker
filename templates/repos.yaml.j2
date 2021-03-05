@@ -1,11 +1,11 @@
 {% for repo in item.custom_modules | default([]) | sort %}
 {{ repo | basename }}:
-    url: "git@sources.le-filament.com:lefilament/{{ repo }}.git"
+    url: "https://sources.le-filament.com/lefilament/{{ repo }}.git"
     branch: "{{ odoo_version }}"
 {% endfor %}
 {% for repo in item.custom_modules_branch | default([]) | sort(attribute='repo') %}
 {{ repo.repo | basename }}: 
-    url: "git@sources.le-filament.com:lefilament/{{ repo.repo }}.git"
+    url: "https://sources.le-filament.com/lefilament/{{ repo.repo }}.git"
 {% if repo.branch is defined %}
     branch: "{{ repo.branch }}"
 {% else %}
