@@ -5,6 +5,20 @@
     files: whitelists.yaml
     project_name: whitelists
 
+- name: pull odoo docker ML image
+  docker_image:
+    name: lefilament/odoo:{{ odoo_version }}_ml
+    source: pull
+    force_source: yes
+  when: odoo_multilingual is defined and odoo_multilingual
+
+- name: pull odoo docker image
+  docker_image:
+    name: lefilament/odoo:{{ odoo_version }}
+    source: pull
+    force_source: yes
+  when: odoo_multilingual is not defined or not odoo_multilingual
+
 - name: build odoo_test docker
   docker_compose:
     project_src: /home/docker/odootest/
@@ -73,3 +87,10 @@
     project_src: /home/docker/odoo/
     remove_orphans: yes
 
+- name: remove intermediate image
+  docker_prune:
+    builder_cache: yes
+    images: yes
+    images_filters:
+      label: stage=builder
+  when: inventory_hostname not in groups['maintenance_contract']

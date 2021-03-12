@@ -37,7 +37,10 @@
   with_items: '{{ odoo_nonprod_instances | default([]) }}'
   loop_control:
     label: '{{ item.name }}'
-  notify: build {{ item.name }} docker
+  notify:
+    - pull odoo docker ML image
+    - pull odoo docker image
+    - build {{ item.name }} docker
   tags: odoo_nonprod
 
 - name: NONPROD copy update scripts to be run during build
@@ -50,7 +53,10 @@
   with_items: '{{ odoo_nonprod_instances | default([]) }}'
   loop_control:
     label: '{{ item.name }}'
-  notify: build {{ item.name }} docker
+  notify:
+    - pull odoo docker ML image
+    - pull odoo docker image
+    - build {{ item.name }} docker
   tags: odoo_nonprod
 
 - name: NONPROD set repos.yaml variables from template
@@ -63,7 +69,10 @@
   with_items: '{{ odoo_nonprod_instances | default([]) }}'
   loop_control:
     label: '{{ item.name }}'
-  notify: build {{ item.name }} docker
+  notify:
+    - pull odoo docker ML image
+    - pull odoo docker image
+    - build {{ item.name }} docker
   tags: odoo_nonprod
 
 - name: NONPROD set repos-addons.yaml variables from template
@@ -76,7 +85,10 @@
   with_items: '{{ odoo_nonprod_instances | default([]) }}'
   loop_control:
     label: '{{ item.name }}'
-  notify: build {{ item.name }} docker
+  notify:
+    - pull odoo docker ML image
+    - pull odoo docker image
+    - build {{ item.name }} docker
   tags: odoo_nonprod
 
 - name: NONPROD copy odoo.conf file
@@ -116,7 +128,10 @@
   with_items: '{{ odoo_nonprod_instances | default([]) }}'
   loop_control:
     label: '{{ item.name }}'
-  notify: build {{ item.name }} docker
+  notify:
+    - pull odoo docker ML image
+    - pull odoo docker image
+    - build {{ item.name }} docker
   tags: odoo_nonprod
 
 - name: NONPROD copy test docker compose service
@@ -162,7 +177,10 @@
     group: root
     mode: '0644'
   when: odoo_nonprod_instances is not defined and odoo_prod is defined
-  notify: build odoo docker prod
+  notify:
+    - pull odoo docker ML image
+    - pull odoo docker image
+    - build odoo docker prod
   tags: odoo_prod
 
 - name: PROD copy update scripts to be run during build
@@ -176,7 +194,10 @@
     - fetch_repos
     - fetch_repos_addons
   when: odoo_nonprod_instances is not defined and odoo_prod is defined
-  notify: build odoo docker prod
+  notify:
+    - pull odoo docker ML image
+    - pull odoo docker image
+    - build odoo docker prod
   tags: odoo_prod
 
 - name: PROD set repos variables from template
@@ -189,7 +210,10 @@
   vars:
     item: "{{ odoo_prod }}"
   when: odoo_nonprod_instances is not defined and odoo_prod is defined
-  notify: build odoo docker prod
+  notify:
+    - pull odoo docker ML image
+    - pull odoo docker image
+    - build odoo docker prod
   tags: odoo_prod
 
 - name: PROD set repos-addons variables from template
@@ -202,7 +226,10 @@
   vars:
     item: "{{ odoo_prod }}"
   when: odoo_nonprod_instances is not defined and odoo_prod is defined
-  notify: build odoo docker prod
+  notify:
+    - pull odoo docker ML image
+    - pull odoo docker image
+    - build odoo docker prod
   tags: odoo_prod
 
 - name: PROD copy odoo.conf file
@@ -213,7 +240,10 @@
     group: root
     mode: '0600'
   when: odoo_nonprod_instances is not defined and odoo_prod is defined
-  notify: build odoo docker prod
+  notify:
+    - pull odoo docker ML image
+    - pull odoo docker image
+    - build odoo docker prod
   tags: odoo_prod
 
 - name: PROD copy private ssh keys file
@@ -271,7 +301,7 @@
 
 - name: Install necessary python modules
   pip:
-    name: ['prettytable', 'cssselect', 'html2text', 'unidecode', 'python-dateutil', 'lxml', 'Pillow', 'Babel', 'pyyaml', 'requests']
+    name: ['prettytable', 'cssselect', 'html2text', 'unidecode', 'python-dateutil', 'lxml', 'Pillow', 'Babel', 'pyyaml', 'requests', 'pyOpenSSL']
     executable: /usr/bin/pip3
     state: latest
   when: banking is defined and odoo_prod is defined
