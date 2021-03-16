@@ -1,7 +1,7 @@
-{% if odoo_version == '12.0' or odoo_version == '11.0' %}
-#!/usr/bin/env python3
-{% else %}
+{% if odoo_version == '10.0' %}
 #!/usr/bin/env python
+{% else %}
+#!/usr/bin/env python3
 {% endif %}
 # -*- coding: utf-8 -*-
 import grp
