@@ -51,6 +51,7 @@ services:
         image: postgres:{{ odoo_db_version }}-alpine
         container_name: {{ item.dir }}_db
         environment:
+            POSTGRES_DB: "postgres"
             POSTGRES_USER: "{{ item.db_user }}"
             POSTGRES_PASSWORD: "{{ item.db_pass }}"
         labels:
