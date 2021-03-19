@@ -91,6 +91,7 @@ services:
             PRE_RESOLVE: 1
         restart: unless-stopped
 
+{% endif %}
     email:
         image: tecnativa/whitelist
         container_name: odoo_email
@@ -106,7 +107,6 @@ services:
             TARGET: "{{ mailserver }}"
             PRE_RESOLVE: 1
         restart: unless-stopped
-{% endif %}
 {% else %}
         image: mailhog/mailhog
         container_name: odoo_smtp
