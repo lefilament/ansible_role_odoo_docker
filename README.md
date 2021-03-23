@@ -48,7 +48,7 @@ srv_proxy_pass: "{{ SERVER_srv_proxy_pass }}"
 backup_sftp_user: "{{ SERVER_backup_sftp_user }}"
 
 ## Odoo configuration
-  
+
 # By default, an Odoo server is deployed with both prod and test instances.
 # By default, all variables for test instance are copied from prod one, but URL and database name
 odoo_prod:
@@ -102,9 +102,8 @@ odoo_prod:
        branch: 12.0-mig-account_bank_statement_import_ofx
        modules:
          - account_bank_statement_import_ofx
-    # Other URLs that should be allowed connecting to (only sub.domain without https:// in front)
     extra_urls:
-      - "sso.le-filament.com"
+     - "{{ SERVER_sso_url }}"
 
 odoo_nonprod_instances:
       - name: odoo_test
@@ -126,46 +125,68 @@ odoo_nonprod_instances:
         custom_modules_oca: "{{ odoo_prod.custom_modules_oca | default([]) }}"
         other_repos: "{{ odoo_prod.other_repos | default([]) }}"
         other_modules: "{{ odoo_prod.other_modules | default([]) }}"
-        # Other URLs that should be allowed connecting to (only sub.domain without https:// in front)
         extra_urls:
-          - "sso.le-filament.com"
-
-# OPTIONAL - Odoo multilingual - Will install Odoo with all languages (English and French only if set to no)
-odoo_multilingual: no
+         - "{{ SERVER_sso_url }}"
 
 
-## OPTIONAL - Mail server configuration - for Odoo
+# Default configuration to use namespaces (uncomment and set to yes to use namespace instead)
+#docker_no_namespace: no
+
+# OPTIONAL - Odoo multilingual - Will install Odoo with all languages (English and French only if set to no - by default) - uncomment and set to yes if needed
+#odoo_multilingual: no
+
+## OPTIONAL - Mail server configuration - for Odoo - uncomment to add mail server
 # Mail domain
-mailname: "{{ SERVER_mail_domain }}"
+#mailname: "{{ SERVER_mail_domain }}"
 # Mail server
-mailserver: "{{ SERVER_mail_srv_url }}"
+#mailserver: "{{ SERVER_mail_srv_url }}"
 # SMTP port
-smtpport: 465
+#smtpport: 465
 # SMTP user
-smtpuser: "{{ SERVER_mail_odoo_user }}"
+#smtpuser: "{{ SERVER_mail_odoo_user }}"
 # SMTP password
-smtppass: "{{ SERVER_mail_odoo_pass }}"
+#smtppass: "{{ SERVER_mail_odoo_pass }}"
 
-## OPTIONAL - Bank configuration - for Odoo automatic retrieval of statements
+## OPTIONAL - Bank configuration - for Odoo automatic retrieval of statements - uncomment to add bank accounts
 # Should auto retrieval be activated ?
-banking: yes
+#banking: yes
 # Bank name
-bank: "{{ SERVER_bank }}"
+#bank: "{{ SERVER_bank }}"
 # Bank website
-bank_website: "{{ SERVER_bank_website }}"
+#bank_website: "{{ SERVER_bank_website }}"
 # Bank user
-bank_login: "{{ SERVER_bank_login }}"
+#bank_login: "{{ SERVER_bank_login }}"
 # Bank password
-bank_pass: "{{ SERVER_bank_pass }}"
+#bank_pass: "{{ SERVER_bank_pass }}"
 # Bank user id
-bank_userid: "{{ SERVER_bank_userid }}"
+#bank_userid: "{{ SERVER_bank_userid }}"
 # Bank account
-bank_account: "{{ SERVER_bank_account }}"
+#bank_account: "{{ SERVER_bank_account }}"
 # Bank account 2
-bank_account2: "{{ SERVER_bank_account2 }}"
+#bank_account2: "{{ SERVER_bank_account2 }}"
 
-# OPTIONAL - GIT private keys - for retrieving private repos (outside Le Filament ones)
-git_private_keys: "{{ SERVER_git_private_keys }}"
+# OPTIONAL - GIT private keys - for retrieving private repos (outside Le Filament ones) - uncomment and provide keys as needed
+#git_private_keys: "{{ SERVER_git_private_keys }}"
+
+# OPTIONAL - Whitelisted URLs allowed to be reached from Odoo SERVER
+#whitelisted_urls:
+# - accounts.google.com
+# - cdnjs.cloudflare.com
+# - www.google.com
+# - www.googleapis.com
+# - www.gravatar.com
+# - nominatim.openstreetmap.org
+# - data.opendatasoft.com
+# - github.com
+# - bitbucket.org
+# - sources.le-filament.com
+# - fonts.googleapis.com
+# - fonts.gstatic.com
+
+# OPTIONAL Deploy Metabase
+#metabase: yes
+#metabase_db_ro_user: "{{ sapo12_odoo_db_ro_user }}"
+#metabase_db_ro_pass: "{{ sapo12_odoo_db_ro_pass }}"
 
 
 ## Backup Swift Storage configuration

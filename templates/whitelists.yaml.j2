@@ -1,173 +1,21 @@
 version: "2.1"
 services:
-    accounts_google_com:
-        image: tecnativa/whitelist
-        restart: unless-stopped
-        labels:
-            co.elastic.logs/enabled: "false"
-        networks:
-            proxy:
-                aliases:
-                    - "accounts.google.com"
-            public:
-        environment:
-            TARGET: "accounts.google.com"
-            PRE_RESOLVE: 1
+{% for url in whitelisted_urls %}
 
-    cdnjs_cloudflare_com:
+    {{ url }}:
         image: tecnativa/whitelist
-        restart: unless-stopped
+        environment:
+            TARGET: "{{ url }}"
+            PRE_RESOLVE: 1
         labels:
             co.elastic.logs/enabled: "false"
         networks:
             proxy:
                 aliases:
-                    - "cdnjs.cloudflare.com"
+                    - "{{ url }}"
             public:
-        environment:
-            TARGET: "cdnjs.cloudflare.com"
-            PRE_RESOLVE: 1
-
-    www_google_com:
-        image: tecnativa/whitelist
         restart: unless-stopped
-        labels:
-            co.elastic.logs/enabled: "false"
-        networks:
-            proxy:
-                aliases:
-                    - "www.google.com"
-            public:
-        environment:
-            TARGET: "www.google.com"
-            PRE_RESOLVE: 1
-
-    www_googleapis_com:
-        image: tecnativa/whitelist
-        restart: unless-stopped
-        labels:
-            co.elastic.logs/enabled: "false"
-        networks:
-            proxy:
-                aliases:
-                    - "www.googleapis.com"
-            public:
-        environment:
-            TARGET: "www.googleapis.com"
-            PRE_RESOLVE: 1
-
-    www_gravatar_com:
-        image: tecnativa/whitelist
-        restart: unless-stopped
-        labels:
-            co.elastic.logs/enabled: "false"
-        networks:
-            proxy:
-                aliases:
-                    - "www.gravatar.com"
-            public:
-        environment:
-            TARGET: "www.gravatar.com"
-            PRE_RESOLVE: 1
-
-    openstreetmap:
-        image: tecnativa/whitelist
-        networks:
-            proxy:
-                aliases:
-                    - "nominatim.openstreetmap.org"
-            public:
-        environment:
-            TARGET: "nominatim.openstreetmap.org"
-            PRE_RESOLVE: 1
-        labels:
-            co.elastic.logs/enabled: "false"
-        restart: unless-stopped
-
-    sirene:
-        image: tecnativa/whitelist
-        networks:
-            proxy:
-                aliases:
-                    - "data.opendatasoft.com"
-            public:
-        environment:
-            TARGET: "data.opendatasoft.com"
-            PRE_RESOLVE: 1
-        labels:
-            co.elastic.logs/enabled: "false"
-        restart: unless-stopped
-
-    github:
-        image: tecnativa/whitelist
-        networks:
-            proxy:
-                aliases:
-                    - "github.com"
-            public:
-        environment:
-            TARGET: "github.com"
-            PRE_RESOLVE: 1
-        labels:
-            co.elastic.logs/enabled: "false"
-        restart: unless-stopped
-
-    bitbucket:
-        image: tecnativa/whitelist
-        networks:
-            proxy:
-                aliases:
-                    - "bitbucket.org"
-            public:
-        environment:
-            TARGET: "bitbucket.org"
-            PRE_RESOLVE: 1
-        labels:
-            co.elastic.logs/enabled: "false"
-        restart: unless-stopped
-
-    gitlab:
-        image: tecnativa/whitelist
-        networks:
-            proxy:
-                aliases:
-                    - "sources.le-filament.com"
-            public:
-        environment:
-            PORT: "443 22"
-            TARGET: "sources.le-filament.com"
-            PRE_RESOLVE: 1
-        labels:
-            co.elastic.logs/enabled: "false"
-        restart: unless-stopped
-
-    fonts_googleapis_com:
-        image: tecnativa/whitelist
-        restart: unless-stopped
-        labels:
-            co.elastic.logs/enabled: "false"
-        networks:
-            proxy:
-                aliases:
-                    - "fonts.googleapis.com"
-            public:
-        environment:
-            TARGET: "fonts.googleapis.com"
-            PRE_RESOLVE: 1
-
-    fonts_gstatic_com:
-        image: tecnativa/whitelist
-        restart: unless-stopped
-        labels:
-            co.elastic.logs/enabled: "false"
-        networks:
-            proxy:
-                aliases:
-                    - "fonts.gstatic.com"
-            public:
-        environment:
-            TARGET: "fonts.gstatic.com"
-            PRE_RESOLVE: 1
+{% endfor %}
 
 networks:
     proxy:

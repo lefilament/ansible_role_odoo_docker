@@ -24,7 +24,12 @@ services:
         networks:
             default:
             inverseproxy_shared:
+{% if whitelisted_urls is defined %}
             whitelists_proxy:
+{% endif %}
+{% if odoo_prod.extra_urls is defined %}
+            extrawhitelists_proxy:
+{% endif %}
 {% if mailname is defined %}
             email_proxy:
 {% endif %}
@@ -121,16 +126,44 @@ services:
         labels:
             co.elastic.logs/enabled: "false"
         networks:
-            whitelists_proxy:
+            extrawhitelists_proxy:
                 aliases:
                     - "{{ url }}"
-            whitelists_public:
+            extrawhitelists_public:
         environment:
             PORT: "443"
             TARGET: "{{ url }}"
             PRE_RESOLVE: 1
         restart: unless-stopped
 {% endfor %}
+{% endif %}
+{% if metabase is defined and metabase %}
+
+    metabase:
+        image: metabase/metabase
+        container_name: odoo_metabase
+        environment:
+            MB_DB_TYPE: "postgres"
+            MB_DB_DBNAME: "{{ odoo_prod.db }}"
+            MB_DB_PORT: 5432
+            MB_DB_USER: "{{ metabase_db_ro_user }}"
+            MB_DB_PASS: "{{ metabase_db_ro_pass }}"
+            MB_DB_HOST: "db"
+        networks:
+            default:
+            inverseproxy_smtp:
+        labels:
+            co.elastic.logs/enabled: "false"
+            traefik.docker.network: "inverseproxy_smtp"
+            traefik.enable: "true"
+            traefik.http.middlewares.metabase-stripprefix.stripprefix.prefixes: "/metabase"
+            traefik.http.routers.metabase.middlewares: "metabase-stripprefix"
+            traefik.http.routers.metabase.rule: "Host(`{{ odoo_prod.url }}`) && PathPrefix(`/metabase/`)"
+            traefik.http.routers.metabase.service: "metabase"
+            traefik.http.services.metabase.loadbalancer.server.port: "3000"
+        restart: unless-stopped
+        volumes:
+            - metabase:/metabase-data:z
 {% endif %}
 
 networks:
@@ -140,11 +173,22 @@ networks:
             encrypted: 1
     inverseproxy_shared:
         external: true
+{% if metabase is defined and metabase %}
+    inverseproxy_smtp:
+        external: true
+{% endif %}
+{% if whitelisted_urls is defined %}
     whitelists_proxy:
         external: true
+{% endif %}
 {% if odoo_prod.extra_urls is defined %}
-    whitelists_public:
-        external: true
+    extrawhitelists_proxy:
+        driver_opts:
+            encrypted: 1
+        internal: true
+    extrawhitelists_public:
+        driver_opts:
+            encrypted: 1
 {% endif %}
 {% if mailname is defined %}
     email_proxy:
@@ -161,4 +205,7 @@ volumes:
     db:
 {% if mailname is defined %}
     smtp:
+{% endif %}
+{% if metabase is defined and metabase %}
+    metabase:
 {% endif %}

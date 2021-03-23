@@ -19,7 +19,12 @@ services:
         networks:
             default:
             inverseproxy_shared:
+{% if whitelisted_urls is defined %}
             whitelists_proxy:
+{% endif %}
+{% if item.extra_urls is defined %}
+            extrawhitelists_proxy:
+{% endif %}
         restart: unless-stopped
         labels:
             co.elastic.logs/multiline.pattern: '^[0-9]{2}'
@@ -42,6 +47,7 @@ services:
             - odoo
             - --smtp-port=1025
             - --database={{ item.db }}
+            - --init=web_environment_ribbon
 {% if ansible_processor_vcpus > 2 %}
             - --workers=2
             - --max-cron-threads=1
@@ -83,10 +89,10 @@ services:
         labels:
             co.elastic.logs/enabled: "false"
         networks:
-            whitelists_proxy:
+            extrawhitelists_proxy:
                 aliases:
                     - "{{ url }}"
-            whitelists_public:
+            extrawhitelists_public:
         environment:
             PORT: "443"
             TARGET: "{{ url }}"
@@ -104,11 +110,18 @@ networks:
         external: true
     inverseproxy_smtp:
         external: true
+{% if whitelisted_urls is defined %}
     whitelists_proxy:
         external: true
-{% if sso_url is defined %}
-    whitelists_public:
-        external: true
+{% endif %}
+{% if item.extra_urls is defined %}
+    extrawhitelists_proxy:
+        driver_opts:
+            encrypted: 1
+        internal: true
+    extrawhitelists_public:
+        driver_opts:
+            encrypted: 1
 {% endif %}
 
 volumes:

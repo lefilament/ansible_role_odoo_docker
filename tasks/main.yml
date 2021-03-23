@@ -11,7 +11,8 @@
     group: root
     mode: '0400'
   notify: start odoo docker whitelists
-  tags: odoo_whitelists
+  when: inventory_hostname in groups['docker_secure'] and whitelisted_urls is defined
+  tags: odoo_whitelists, odoo_prod
 
 #--------------------------------------------------
 # Test Docker section
