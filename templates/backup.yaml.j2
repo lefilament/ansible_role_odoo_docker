@@ -22,6 +22,9 @@ services:
             JOB_302_WHEN: "daily"
         volumes:
             - odoo_filestore:/mnt/backup/src/odoo:z
+{% if metabase is defined and metabase %}
+            - odoo_metabase:/mnt/backup/src/metabase:z
+{% endif %}
         networks:
             - odoo_default
             - public
@@ -38,3 +41,7 @@ networks:
 volumes:
     odoo_filestore:
         external: true
+{% if metabase is defined and metabase %}
+    odoo_metabase:
+        external: true
+{% endif %}
