@@ -143,22 +143,17 @@ services:
         image: metabase/metabase
         container_name: odoo_metabase
         environment:
-            MB_DB_TYPE: "postgres"
-            MB_DB_DBNAME: "{{ odoo_prod.db }}"
-            MB_DB_PORT: 5432
-            MB_DB_USER: "{{ metabase_db_ro_user }}"
-            MB_DB_PASS: "{{ metabase_db_ro_pass }}"
-            MB_DB_HOST: "db"
+            MB_DB_FILE: "/metabase-data/metabase.db"
         networks:
             default:
-            inverseproxy_smtp:
+            inverseproxy_bi:
         labels:
             co.elastic.logs/enabled: "false"
-            traefik.docker.network: "inverseproxy_smtp"
+            traefik.docker.network: "inverseproxy_bi"
             traefik.enable: "true"
             traefik.http.middlewares.metabase-stripprefix.stripprefix.prefixes: "/metabase"
             traefik.http.routers.metabase.middlewares: "metabase-stripprefix"
-            traefik.http.routers.metabase.rule: "Host(`{{ odoo_prod.url }}`) && PathPrefix(`/metabase/`)"
+            traefik.http.routers.metabase.rule: "Host(`{{ odoo_prod.url }}`) && PathPrefix(`/metabase`)"
             traefik.http.routers.metabase.service: "metabase"
             traefik.http.services.metabase.loadbalancer.server.port: "3000"
         restart: unless-stopped
@@ -174,7 +169,7 @@ networks:
     inverseproxy_shared:
         external: true
 {% if metabase is defined and metabase %}
-    inverseproxy_smtp:
+    inverseproxy_bi:
         external: true
 {% endif %}
 {% if whitelisted_urls is defined %}
