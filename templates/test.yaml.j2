@@ -3,7 +3,7 @@ services:
     odoo:
         build:
             context: ./odoo
-        image: filament/odoo:{{ item.image_version }}
+        image: filament/odoo:{{ item.image_version }}test
         container_name: {{ item.dir }}
         depends_on:
             - db
