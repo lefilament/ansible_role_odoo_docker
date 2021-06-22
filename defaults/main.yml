@@ -1,0 +1,123 @@
+---
+
+## Odoo configuration
+## Odoo PostgreSQL version
+odoo_db_version: '13'
+## Odoo version
+odoo_version: '14.0'
+
+## Custom modules default URL for retrieving custom modules :
+custom_modules_base_url: "https://sources.le-filament.com/lefilament"
+
+## OPTIONAL - Default configuration to use namespaces (set to false to not use namespace)
+docker_userns_remap: true
+
+## OPTIONAL - Odoo multilingual - Will install Odoo with all languages (English and French only if set to no - by default) - uncomment and set to yes if needed
+odoo_multilingual: false
+
+## OPTIONAL - Force usage of Python 3.6 for Odoo 12.0
+odoo_python36: false
+
+## OPTIONAL - Extra pip packages to be installed in image
+# odoo_pip_packages: unidecode
+
+### OPTIONAL - Mail server configuration - for Odoo - uncomment to add mail server
+## Mail domain
+# mailname: example.org
+## Mail server
+# mailserver: smtp.example.org
+## SMTP port
+# smtpport: 465
+## SMTP user
+# smtpuser: smtpuser
+## SMTP password
+# smtppass: veryUnsecurePassToBeModified
+## IMAP mail server
+# imap_mailserver: imap.example.org
+
+## OPTIONAL - Bank configuration - for Odoo automatic retrieval of statements (based on https://woob.tech/)
+## Should auto retrieval be activated ?
+banking: false
+## Bank name
+# bank: "caissedepargne"
+## Bank website (if required by woob)
+# bank_website: "www.caisse-epargne.fr"
+## Bank user
+# bank_login: "12345677890"
+## Bank user id (if required by your bank)
+# bank_userid: "0001"
+## Bank password
+# bank_pass: "123456"
+## Bank account
+# bank_account: "bankaccount1"
+## Bank account 2
+# bank_account: "bankaccount2"
+## Bank account 3
+# bank_account: "bankaccount3"
+## This role allows for defining up to 3 accounts for this bank, but also a second bank and 2 accounts with the following variables :
+# bank_account2: "bankaccount2"
+# bank_account3: "bankaccount3"
+# bank2: "cragr"
+# bank2_login: "12345677890"
+# bank2_pass: "123456"
+# bank2_userid: "0001"
+# bank2_account: "bank2account1"
+# bank2_account: "bank2account2"
+
+## OPTIONAL - GIT private keys - for retrieving private repos (outside Le Filament ones) - uncomment and provide keys as needed
+# git_private_keys: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK0wmN/Cr3JXqmLW7u+g9pTh+wyqDHpSQEIQczXkVx9q testuser"
+
+# whether dockers should be granted access to Internet or if networks are internal only
+# (defaults to true meaning docker containers have no direct internet access,
+# whitelisted URLs should be used to grant specific access)
+restrict_internet_access: true
+## OPTIONAL - Whitelisted URLs allowed to be reached from Odoo SERVER
+# whitelisted_urls:
+#   - accounts.google.com
+#   - cdnjs.cloudflare.com
+#   - www.google.com
+#   - www.googleapis.com
+#   - www.gravatar.com
+#   - nominatim.openstreetmap.org
+#   - data.opendatasoft.com
+#   - github.com
+#   - bitbucket.org
+#   - sources.le-filament.com
+#   - fonts.googleapis.com
+#   - fonts.gstatic.com
+
+## OPTIONAL - Allow access to Odoo DB from outside world
+odoo_remote_db_access: false
+## OPTIONAL - Extra commands to be added in Dockerfile building Odoo image
+# odoo_specific_dockerfile_commands: []
+## OPTIONAL - Extra host to be defined in Odoo docker /etc/hosts for local access and prevent DNS resolution
+# odoo_extra_host: "docs.example.org:172.17.0.1"
+## OPTIONAL - update performance limits for Odoo (see https://www.odoo.com/documentation/14.0/developer/reference/cmdline.html)
+# odoo_limit_time_cpu: 60
+# odoo_limit_time_real: 120
+
+## OPTIONAL - Deploy Metabase
+metabase: false
+# metabase_db_ro_user: readonlyuser
+# metabase_db_ro_pass: veryUnsecurePassToBeModified
+
+
+## OPTIONAL - For Backups only
+## Parameters for pushing backups to Object Storage - Instance 1
+# swift_odoo_authurl: https://auth.cloud.ovh.net/v3/
+# swift_odoo_authversion: 3
+# swift_odoo_tenantid: "132e1fa"
+# swift_odoo_tenantname: "12312534534"
+# swift_odoo_username: "testuser"
+# swift_odoo_password: "testpassword"
+# swift_odoo_regionname: "GRA"
+## Parameters for pushing backups to Object Storage - Instance 2
+# swift_odoo2_authurl: https://auth.cloud.ovh.net/v3/
+# swift_odoo2_authversion: 3
+# swift_odoo2_tenantid: "12323534ab"
+# swift_odoo2_tenantname: "123124235345"
+# swift_odoo2_username: "testuser"
+# swift_odoo2_password: "testpassword"
+# swift_odoo2_regionname: "DE"
+## Passphrase for backups encryption
+# odoo_backup_pass: notSecureEnoughPasswordToBeModified

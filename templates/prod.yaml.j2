@@ -12,10 +12,14 @@ services:
             - smtp
         environment:
             PGDATABASE: "{{ odoo_prod.db }}"
+{% if odoo_extra_host is defined %}
+        extra_hosts:
+            - "{{ odoo_extra_host }}"
+{% endif %}
         tty: true
         volumes:
             - filestore:/opt/odoo/data:z
-{% if banking is defined %}
+{% if banking %}
             - ./bank/:/ofx/:ro
 {% endif %}
 {% if private_pull is defined %}
@@ -24,11 +28,13 @@ services:
         networks:
             default:
             inverseproxy_shared:
+{% if restrict_internet_access %}
 {% if whitelisted_urls is defined %}
             whitelists_proxy:
 {% endif %}
 {% if odoo_prod.extra_urls is defined %}
             extrawhitelists_proxy:
+{% endif %}
 {% endif %}
 {% if mailname is defined %}
             email_proxy:
@@ -60,6 +66,13 @@ services:
             POSTGRES_PASSWORD: "{{ odoo_prod.db_pass }}"
         labels:
             co.elastic.logs/module: postgresql
+{% if odoo_remote_db_access %}
+        networks:
+            default:
+            public:
+        ports:
+            - "15432:5432"
+{% endif %}
         volumes:
             - db:/var/lib/postgresql/data:z
         restart: unless-stopped
@@ -81,10 +94,13 @@ services:
             MAIL_CANONICAL_DOMAINS: "{{ mailname }}"
             MAIL_NON_CANONICAL_DEFAULT: "{{ mailname }}"
         restart: unless-stopped
+{% if restrict_internet_access %}
 {% if imap_mailserver is defined %}
     email_imap:
         image: tecnativa/whitelist
         container_name: odoo_imap
+        labels:
+            co.elastic.logs/enabled: "false"
         networks:
             email_proxy:
                 aliases:
@@ -112,12 +128,15 @@ services:
             TARGET: "{{ mailserver }}"
             PRE_RESOLVE: 1
         restart: unless-stopped
+{% endif %}
 {% else %}
         image: mailhog/mailhog
         container_name: odoo_smtp
         restart: unless-stopped
+        labels:
+            co.elastic.logs/enabled: "false"
 {% endif %}
-{% if odoo_prod.extra_urls is defined %}
+{% if restrict_internet_access and odoo_prod.extra_urls is defined %}
 {% for url in odoo_prod.extra_urls %}
 
     {{ url }}:
@@ -137,7 +156,7 @@ services:
         restart: unless-stopped
 {% endfor %}
 {% endif %}
-{% if metabase is defined and metabase %}
+{% if metabase %}
 
     metabase:
         image: metabase/metabase
@@ -168,10 +187,11 @@ networks:
             encrypted: 1
     inverseproxy_shared:
         external: true
-{% if metabase is defined and metabase %}
+{% if metabase %}
     inverseproxy_bi:
         external: true
 {% endif %}
+{% if restrict_internet_access %}
 {% if whitelisted_urls is defined %}
     whitelists_proxy:
         external: true
@@ -185,14 +205,20 @@ networks:
         driver_opts:
             encrypted: 1
 {% endif %}
+{% endif %}
 {% if mailname is defined %}
     email_proxy:
         driver_opts:
             encrypted: 1
+{% if restrict_internet_access %}
         internal: true
     email_public:
         driver_opts:
             encrypted: 1
+{% endif %}
+{% endif %}
+{% if odoo_remote_db_access %}
+    public:
 {% endif %}
 
 volumes:
@@ -201,6 +227,6 @@ volumes:
 {% if mailname is defined %}
     smtp:
 {% endif %}
-{% if metabase is defined and metabase %}
+{% if metabase %}
     metabase:
 {% endif %}

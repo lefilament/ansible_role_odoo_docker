@@ -10,6 +10,10 @@ services:
             - smtp
         environment:
             PGDATABASE: "{{ item.db }}"
+{% if odoo_extra_host is defined %}
+        extra_hosts:
+            - "{{ odoo_extra_host }}"
+{% endif %}
         tty: true
         volumes:
             - filestore:/opt/odoo/data:z
@@ -19,17 +23,17 @@ services:
         networks:
             default:
             inverseproxy_shared:
+{% if restrict_internet_access %}
 {% if whitelisted_urls is defined %}
             whitelists_proxy:
 {% endif %}
 {% if item.extra_urls is defined %}
             extrawhitelists_proxy:
 {% endif %}
+{% endif %}
         restart: unless-stopped
         labels:
-            co.elastic.logs/multiline.pattern: '^[0-9]{2}'
-            co.elastic.logs/multiline.negate: 'true'
-            co.elastic.logs/multiline.match: "after"
+            co.elastic.logs/enabled: "false"
             traefik.enable: "true"
 {% if ansible_processor_vcpus > 2 %}
             traefik.http.routers.{{ item.dir }}-longpolling.rule: "Host(`{{ item.url }}`) && PathPrefix(`/longpolling/`)"
@@ -58,10 +62,15 @@ services:
         container_name: {{ item.dir }}_db
         environment:
             POSTGRES_DB: "postgres"
+{% if odoo_prod is defined %}
+            POSTGRES_USER: "{{ odoo_prod.db_user }}"
+            POSTGRES_PASSWORD: "{{ odoo_prod.db_pass }}"
+{% else %}
             POSTGRES_USER: "{{ item.db_user }}"
             POSTGRES_PASSWORD: "{{ item.db_pass }}"
+{% endif %}
         labels:
-            co.elastic.logs/module: postgresql
+            co.elastic.logs/enabled: "false"
         volumes:
             - db:/var/lib/postgresql/data:z
         restart: unless-stopped
@@ -74,13 +83,14 @@ services:
             default:
             inverseproxy_smtp:
         labels:
+            co.elastic.logs/enabled: "false"
             traefik.docker.network: "inverseproxy_smtp"
             traefik.enable: "true"
             traefik.http.routers.{{ item.dir }}smtp.middlewares: "auth@file, smtp-stripprefix@file"
             traefik.http.routers.{{ item.dir }}smtp.rule: "Host(`{{ item.url }}`) && PathPrefix(`/smtp/`)"
             traefik.http.routers.{{ item.dir }}smtp.service: "{{ item.dir }}smtp"
             traefik.http.services.{{ item.dir }}smtp.loadbalancer.server.port: "8025"
-{% if item.extra_urls is defined %}
+{% if restrict_internet_access and item.extra_urls is defined %}
 {% for url in item.extra_urls %}
 
     {{ url }}:
@@ -110,6 +120,7 @@ networks:
         external: true
     inverseproxy_smtp:
         external: true
+{% if restrict_internet_access %}
 {% if whitelisted_urls is defined %}
     whitelists_proxy:
         external: true
@@ -122,6 +133,7 @@ networks:
     extrawhitelists_public:
         driver_opts:
             encrypted: 1
+{% endif %}
 {% endif %}
 
 volumes:

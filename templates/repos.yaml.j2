@@ -1,11 +1,11 @@
 {% for repo in item.custom_modules | default([]) | sort %}
 {{ repo | basename }}:
-    url: "https://sources.le-filament.com/lefilament/{{ repo }}.git"
+    url: "{{ custom_modules_base_url }}/{{ repo }}.git"
     branch: "{{ odoo_version }}"
 {% endfor %}
 {% for repo in item.custom_modules_branch | default([]) | sort(attribute='repo') %}
-{{ repo.repo | basename }}: 
-    url: "https://sources.le-filament.com/lefilament/{{ repo.repo }}.git"
+{{ repo.repo | basename }}:
+    url: "{{ custom_modules_base_url }}/{{ repo.repo }}.git"
 {% if repo.branch is defined %}
     branch: "{{ repo.branch }}"
 {% else %}
@@ -13,7 +13,7 @@
 {% endif %}
 {% endfor %}
 {% for repo in item.other_repos | default([]) | sort(attribute='repo') %}
-{{ repo.repo }}: 
+{{ repo.repo }}:
     url: {{ repo.url }}
 {% if repo.branch is defined %}
     branch: "{{ repo.branch }}"

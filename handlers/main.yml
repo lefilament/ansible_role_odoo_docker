@@ -9,88 +9,122 @@
   docker_image:
     name: lefilament/odoo:{{ odoo_version }}_ml
     source: pull
-    force_source: yes
+    force_source: true
   when: odoo_multilingual is defined and odoo_multilingual
+
+- name: pull odoo docker Python3.6 image
+  docker_image:
+    name: lefilament/odoo:{{ odoo_version }}_py3.6
+    source: pull
+    force_source: true
+  when: odoo_python36 is defined and odoo_python36
 
 - name: pull odoo docker image
   docker_image:
     name: lefilament/odoo:{{ odoo_version }}
     source: pull
-    force_source: yes
-  when: odoo_multilingual is not defined or not odoo_multilingual
+    force_source: true
+  when: (odoo_multilingual is not defined or not odoo_multilingual) and (odoo_python36 is not defined or not odoo_python36)
 
 - name: build odoo_test docker
   docker_compose:
     project_src: /home/docker/odootest/
-    build: yes
-    nocache: yes
+    build: true
+    nocache: true
     recreate: always
-    restarted: yes
-    remove_orphans: yes
+    restarted: true
+    remove_orphans: true
   async: 600
   poll: 10
   when: not ansible_check_mode
+
+- name: remove odoo_test ssh private keys
+  file:
+    path: "/home/docker/odootest/odoo/id_ed25519.sources"
+    state: absent
+  when: inventory_hostname not in groups['maintenance_contract']
 
 - name: start odoo_test docker
   docker_compose:
     project_src: /home/docker/odootest/
-    remove_orphans: yes
+    remove_orphans: true
 
 - name: build odoo_dev docker
   docker_compose:
     project_src: /home/docker/odoodev/
-    build: yes
-    nocache: yes
+    build: true
+    nocache: true
     recreate: always
-    restarted: yes
-    remove_orphans: yes
+    restarted: true
+    remove_orphans: true
   async: 600
   poll: 10
   when: not ansible_check_mode
+
+- name: remove odoo_dev ssh private keys
+  file:
+    path: "/home/docker/odoodev/odoo/id_ed25519.sources"
+    state: absent
+  when: inventory_hostname not in groups['maintenance_contract']
 
 - name: start odoo_dev docker
   docker_compose:
     project_src: /home/docker/odoodev/
-    remove_orphans: yes
+    remove_orphans: true
 
 - name: build odoo_preprod docker
   docker_compose:
     project_src: /home/docker/odoopreprod/
-    build: yes
-    nocache: yes
+    build: true
+    nocache: true
     recreate: always
-    restarted: yes
-    remove_orphans: yes
+    restarted: true
+    remove_orphans: true
   async: 600
   poll: 10
   when: not ansible_check_mode
+
+- name: remove odoo_preprod ssh private keys
+  file:
+    path: "/home/docker/odoopreprod/odoo/id_ed25519.sources"
+    state: absent
+  when: inventory_hostname not in groups['maintenance_contract']
 
 - name: start odoo_preprod docker
   docker_compose:
     project_src: /home/docker/odoopreprod/
-    remove_orphans: yes
+    remove_orphans: true
 
 - name: build odoo docker prod
   docker_compose:
     project_src: /home/docker/odoo/
-    build: yes
-    nocache: yes
+    build: true
+    nocache: true
     recreate: always
-    restarted: yes
-    remove_orphans: yes
+    restarted: true
+    remove_orphans: true
   async: 600
   poll: 10
   when: not ansible_check_mode
 
+- name: remove prod ssh private keys
+  copy:
+    content: " "
+    dest: "/home/docker/odoo/odoo/id_ed25519.sources"
+    owner: root
+    group: root
+    mode: '0400'
+  when: inventory_hostname not in groups['maintenance_contract']
+
 - name: start odoo docker prod
   docker_compose:
     project_src: /home/docker/odoo/
-    remove_orphans: yes
+    remove_orphans: true
 
 - name: remove intermediate image
   docker_prune:
-    builder_cache: yes
-    images: yes
+    builder_cache: true
+    images: true
     images_filters:
       label: stage=builder
   when: inventory_hostname not in groups['maintenance_contract']
