@@ -8,8 +8,8 @@ galaxy_info:
   platforms:
     - name: Ubuntu
       versions:
-        - 18.04
-        - 20.04
+        - bionic
+        - focal
   galaxy_tags:
     - odoo
     - community
