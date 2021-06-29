@@ -110,6 +110,22 @@ services:
         restart: unless-stopped
 {% endfor %}
 {% endif %}
+{% if item.extra_app is defined %}
+
+    app:
+        image: {{ item.extra_app.image }}
+        container_name: {{ item.extra_app.name }}
+        restart: unless-stopped
+        networks:
+            inverseproxy_app:
+        labels:
+            co.elastic.logs/enabled: "false"
+            traefik.docker.network: "inverseproxy_app"
+            traefik.enable: "true"
+            traefik.http.routers.{{ item.extra_app.name | lower | regex_replace('_','') }}.rule: "Host(`{{ item.extra_app.url }}`)"
+            traefik.http.routers.{{ item.extra_app.name | lower | regex_replace('_','') }}.service: "{{ item.extra_app.name | lower | regex_replace('_','') }}"
+            traefik.http.services.{{ item.extra_app.name | lower | regex_replace('_','') }}.loadbalancer.server.port: "80"
+{% endif %}
 
 networks:
     default:
@@ -120,6 +136,10 @@ networks:
         external: true
     inverseproxy_smtp:
         external: true
+{% if item.extra_app is defined %}
+    inverseproxy_app:
+        external: true
+{% endif %}
 {% if restrict_internet_access %}
 {% if whitelisted_urls is defined %}
     whitelists_proxy:

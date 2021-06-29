@@ -61,3 +61,6 @@ max_cron_threads = {{ ansible_processor_vcpus | int }}
 ; xmlrpcs = True
 ; xmlrpcs_interface =
 ; xmlrpcs_port = 8071
+{% if odoo_extra_conf is defined %}
+{{ odoo_extra_conf }}
+{% endif %}

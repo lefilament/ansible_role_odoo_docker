@@ -179,6 +179,22 @@ services:
         volumes:
             - metabase:/metabase-data:z
 {% endif %}
+{% if odoo_prod.extra_app is defined %}
+
+    app:
+        image: {{ odoo_prod.extra_app.image }}
+        container_name: {{ odoo_prod.extra_app.name }}
+        restart: unless-stopped
+        networks:
+            inverseproxy_app:
+        labels:
+            co.elastic.logs/enabled: "false"
+            traefik.docker.network: "inverseproxy_app"
+            traefik.enable: "true"
+            traefik.http.routers.{{ odoo_prod.extra_app.name | lower | regex_replace('_','') }}.rule: "Host(`{{ odoo_prod.extra_app.url }}`)"
+            traefik.http.routers.{{ odoo_prod.extra_app.name | lower | regex_replace('_','') }}.service: "{{ odoo_prod.extra_app.name | lower | regex_replace('_','') }}"
+            traefik.http.services.{{ odoo_prod.extra_app.name | lower | regex_replace('_','') }}.loadbalancer.server.port: "80"
+{% endif %}
 
 networks:
     default:
@@ -187,6 +203,10 @@ networks:
             encrypted: 1
     inverseproxy_shared:
         external: true
+{% if odoo_prod.extra_app is defined %}
+    inverseproxy_app:
+        external: true
+{% endif %}
 {% if metabase %}
     inverseproxy_bi:
         external: true
