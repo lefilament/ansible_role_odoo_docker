@@ -112,7 +112,7 @@
 
 - name: NONPROD copy private GitLab ssh keys file
   copy:
-    content: "{{ lf_gitlab_ro_privkey }}"
+    content: "{{ git_modules_privkey | default('') }}"
     dest: "/home/docker/{{ item.dir }}/odoo/id_ed25519.sources"
     owner: root
     group: root
@@ -413,7 +413,7 @@
 # --------------------------------------------------
 - name: PROD Install Debian OS packages
   apt:
-    name: ['python3-pip', 'python3-virtualenv', 'python3-setuptools']
+    name: ['python3-pip', 'python3-setuptools', 'python3.8-venv']
     state: latest
     update_cache: true
     force: true
@@ -425,7 +425,7 @@
 
 - name: PROD Check Installed Debian OS packages
   apt:
-    name: ['python3-pip', 'python3-virtualenv', 'python3-setuptools']
+    name: ['python3-pip', 'python3-setuptools', 'python3.8-venv']
     state: latest
     update_cache: true
     force: true

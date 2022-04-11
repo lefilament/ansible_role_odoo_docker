@@ -137,21 +137,21 @@ services:
             co.elastic.logs/enabled: "false"
 {% endif %}
 {% if restrict_internet_access and odoo_prod.extra_urls is defined %}
-{% for url in odoo_prod.extra_urls %}
+{% for server in odoo_prod.extra_urls %}
 
-    {{ url }}:
+    {{ server.url }}:
         image: tecnativa/whitelist
-        container_name: odoo_{{ url }}
+        container_name: odoo_{{ server.url }}
         labels:
             co.elastic.logs/enabled: "false"
         networks:
             extrawhitelists_proxy:
                 aliases:
-                    - "{{ url }}"
+                    - "{{ server.url }}"
             extrawhitelists_public:
         environment:
-            PORT: "443"
-            TARGET: "{{ url }}"
+            PORT: "{{ server.port }}"
+            TARGET: "{{ server.url }}"
             PRE_RESOLVE: 1
         restart: unless-stopped
 {% endfor %}

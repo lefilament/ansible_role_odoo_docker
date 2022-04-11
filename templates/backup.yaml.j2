@@ -2,7 +2,7 @@ version: "2.1"
 services:
     backup_odoo:
         image: tecnativa/duplicity:postgres
-        hostname: backup-odoo
+        hostname: {{ inventory_hostname_short | lower | regex_replace('_','') }}-odoo
         environment:
             DST: "swift://odoo_{{ inventory_hostname|lower }}"
             PGDATABASE: "{{ odoo_prod.db }}"
@@ -20,7 +20,9 @@ services:
             JOB_300_WHAT: "backup --full-if-older-than 6D --allow-source-mismatch"
             JOB_302_WHAT: "dup remove-all-but-n-full 5 --force $$DST $$@"
             JOB_302_WHEN: "daily"
+            OPTIONS: "--allow-source-mismatch"
         volumes:
+            - odoo_backup_cache:/root/.cache/duplicity/:z
             - odoo_filestore:/mnt/backup/src/odoo:z
 {% if metabase is defined and metabase %}
             - odoo_metabase:/mnt/backup/src/metabase:z
@@ -39,6 +41,7 @@ networks:
             encrypted: 1
 
 volumes:
+    odoo_backup_cache:
     odoo_filestore:
         external: true
 {% if metabase is defined and metabase %}

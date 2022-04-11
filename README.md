@@ -100,7 +100,8 @@ odoo_prod_example: # To be renamed odoo_prod
     ## OPTIONAL extra_urls to be accessible from this Odoo intance only
     ## (if URLs need to be accessible from both prod and non-prod instances, use whitelisted_urls instead)
     # extra_urls:
-    #     - "docs.example.org"
+    #     - url: "docs.example.org"
+    #       port: 443
     ## OPTIONAL parameters for deploying another app (for instance a JS app)
     # extra_app:
     #     - name: odoo_app
@@ -175,6 +176,7 @@ odoo_nonprod_instances_example: # To be renamed odoo_nonprod_instances
 Also backups are designed to be performed only on prod instances, backups can however be restored on every non prod instance.
 
 * Extra modules : although Odoo comes with a number of apps, the real added value comes from community modules. A number of variables allow to retrieve modules from various sources :
+  * git_modules_privkey : private key used to retrieve modules from private repos (for now only supports ed25519)
   * custom_modules : allows to retrieve unitary modules from custom_modules_base_url variable (these will use the same branch as odoo_version variable). This is useful if like Le Filament you are developping a number of modules, this way you only have to define path to the modules, and not the full URL each time
   * custom_modules_branch : allows to retrieve unitary modules from custom_modules_base_url variable on a specific git branch
   * custom_modules_oca: this allows to retrieve named modules from OCA repositories (https://github.com/OCA)
