@@ -45,7 +45,7 @@ services:
             co.elastic.logs/multiline.negate: 'true'
             co.elastic.logs/multiline.match: "after"
             traefik.enable: "true"
-{% if ansible_processor_vcpus > 2 %}
+{% if ansible_processor_vcpus > 2 or odoo_prod.force_odoo_workers is defined %}
             traefik.http.routers.odoo-longpolling.rule: "Host(`{{ odoo_prod.url }}`{% if odoo_prod.url2 is defined %}, `{{ odoo_prod.url2 }}`{% endif %}) && PathPrefix(`/longpolling/`)"
             traefik.http.routers.odoo-longpolling.service: "odoo-longpolling"
             traefik.http.services.odoo-longpolling.loadbalancer.server.port: "8072"
@@ -64,6 +64,9 @@ services:
             POSTGRES_DB: "postgres"
             POSTGRES_USER: "{{ odoo_prod.db_user }}"
             POSTGRES_PASSWORD: "{{ odoo_prod.db_pass }}"
+{% if postgres_options is defined %}
+            PGOPTIONS: "{{ postgres_options }}"
+{% endif %}
         labels:
             co.elastic.logs/module: postgresql
 {% if odoo_remote_db_access %}

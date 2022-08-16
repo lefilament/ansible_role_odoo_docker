@@ -1,7 +1,8 @@
 version: "2.1"
 services:
     backup_odoo:
-        image: tecnativa/duplicity:postgres
+        image: remifilament/duplicity:postgres # Until https://github.com/Tecnativa/docker-duplicity/pull/324 is merged
+        # image: ghcr.io/tecnativa/docker-duplicity-postgres:master # Once https://github.com/Tecnativa/docker-duplicity/pull/324 is merged
         hostname: {{ inventory_hostname_short | lower | regex_replace('_','') }}-odoo
         environment:
             DST: "swift://odoo_{{ inventory_hostname|lower }}"
@@ -16,11 +17,10 @@ services:
             SWIFT_TENANTNAME: "{{ swift_odoo_tenantname }}"
             SWIFT_TENANTID: "{{ swift_odoo_tenantid }}"
             SWIFT_REGIONNAME: "{{ swift_odoo_regionname }}"
-            JOB_200_WHAT: "pg_dump --no-owner --format c --file $$SRC/$$PGDATABASE.pgdump"
-            JOB_300_WHAT: "backup --full-if-older-than 6D --allow-source-mismatch"
+            JOB_200_WHEN: "never"
+            JOB_300_WHAT: "pg_dump --no-owner --format c --file $$SRC/$$PGDATABASE.pgdump && backup --full-if-older-than 6D"
             JOB_302_WHAT: "dup remove-all-but-n-full 5 --force $$DST $$@"
             JOB_302_WHEN: "daily"
-            OPTIONS: "--allow-source-mismatch"
         volumes:
             - odoo_backup_cache:/root/.cache/duplicity/:z
             - odoo_filestore:/mnt/backup/src/odoo:z

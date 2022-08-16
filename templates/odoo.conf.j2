@@ -1,23 +1,19 @@
 [options]
 addons_path = /opt/odoo/odoo/addons,/opt/odoo/additional_addons,/opt/odoo/private_addons
 data_dir = /opt/odoo/data
-{% if odoo_prod is defined %}
-admin_passwd = {{ odoo_prod.master_pass }}
 ; csv_internal_sep = ,
-; db_maxconn = 64
-db_name = {{ odoo_prod.db }}
-db_password = {{ odoo_prod.db_pass }}
+db_maxconn = {{ odoo_db_maxconn | default(64) }}
 ; db_template = template1
 ; dbfilter = .*
+{% if odoo_prod is defined %}
+admin_passwd = {{ odoo_prod.master_pass }}
+db_name = {{ odoo_prod.db }}
+db_password = {{ odoo_prod.db_pass }}
 db_user = {{ odoo_prod.db_user }}
 {% else %}
 admin_passwd = {{ item.master_pass }}
-; csv_internal_sep = ,
-; db_maxconn = 64
 db_name = {{ item.db }}
 db_password = {{ item.db_pass }}
-; db_template = template1
-; dbfilter = .*
 db_user = {{ item.db_user }}
 {% endif %}
 ; debug_mode = False
@@ -49,7 +45,7 @@ smtp_server = smtp
 ; smtp_user = False
 unaccent = True
 without_demo = all
-{% if ansible_processor_vcpus > 2 %}
+{% if ansible_processor_vcpus > 2 or odoo_prod.force_odoo_workers is defined %}
 workers = {{ (ansible_processor_vcpus * 2 - 1) | int | abs }}
 max_cron_threads = {{ ansible_processor_vcpus | int }}
 {% else %}

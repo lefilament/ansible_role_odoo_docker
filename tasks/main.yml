@@ -441,7 +441,7 @@
 - name: PROD Install necessary python modules
   pip:
     name: ['prettytable', 'cssselect', 'html2text', 'unidecode', 'python-dateutil', 'lxml', 'Pillow', 'Babel', 'PyYAML', 'requests', 'pyOpenSSL', 'six']
-    executable: /usr/bin/pip3
+    executable: pip3
     state: latest
   when: banking and odoo_prod is defined
   tags: bank,odoo_prod

@@ -93,10 +93,13 @@ odoo_remote_db_access: false
 ## OPTIONAL - Extra host to be defined in Odoo docker /etc/hosts for local access and prevent DNS resolution
 # odoo_extra_host: "docs.example.org:172.17.0.1"
 ## OPTIONAL - update performance limits for Odoo (see https://www.odoo.com/documentation/14.0/developer/reference/cmdline.html)
-# odoo_limit_time_cpu: 60
-# odoo_limit_time_real: 120
+# odoo_db_maxconn: 64
+# odoo_limit_time_cpu: 300
+# odoo_limit_time_real: 600
 ## OPTIONAL - Extra variables to be added in odoo.conf
 # odoo_extra_conf: "log_level = debug"
+## OPTIONAL - update performance limits for Odoo (see https://www.odoo.com/documentation/14.0/developer/reference/cmdline.html)
+# postgres_options: "-c max_connections=100"
 
 ## OPTIONAL - Deploy Metabase
 metabase: false

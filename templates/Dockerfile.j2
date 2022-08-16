@@ -7,7 +7,7 @@ COPY ./id_ed25519.sources /root/.ssh/
 COPY ./ssh_config /root/.ssh/config
 {% if git_private_keys is defined %}
 # Install private keys
-COPY ./id_rsa ~root/.ssh/
+COPY ./id_rsa /root/.ssh/
 {% endif %}
 # Install private repos
 COPY ./private/* /opt/odoo/private/
