@@ -1,39 +1,36 @@
 [options]
+;; COMMON OPTIONS
 addons_path = /opt/odoo/odoo/addons,/opt/odoo/additional_addons,/opt/odoo/private_addons
+admin_passwd = {{ odoo_instances[item.value.prod_instance | default(item.key )].master_pass | password_hash('pbkdf2_sha512', 65534 | random(seed=inventory_hostname) | string) }}
 data_dir = /opt/odoo/data
-; csv_internal_sep = ,
-db_maxconn = {{ odoo_db_maxconn | default(64) }}
-; db_template = template1
-; dbfilter = .*
-{% if odoo_prod is defined %}
-admin_passwd = {{ odoo_prod.master_pass }}
-db_name = {{ odoo_prod.db }}
-db_password = {{ odoo_prod.db_pass }}
-db_user = {{ odoo_prod.db_user }}
-{% else %}
-admin_passwd = {{ item.master_pass }}
-db_name = {{ item.db }}
-db_password = {{ item.db_pass }}
-db_user = {{ item.db_user }}
+{% if instance_odoo_setup.odoo_version == '12.0' or instance_odoo_setup.odoo_version == '14.0' or instance_odoo_setup.odoo_version == '16.0' %}
+server_wide_modules = base,web,module_change_auto_install{% if item.value.odoo_server_wide_modules is defined %},{{ item.value.odoo_server_wide_modules }}{% endif %}
 {% endif %}
-; debug_mode = False
-; email_from = False
-; limit_memory_hard = 2684354560
-; limit_memory_soft = 2147483648
-; limit_request = 8192
-limit_time_cpu = {{ odoo_limit_time_cpu | default(300) }}
-limit_time_real = {{ odoo_limit_time_real | default(600) }}
-; list_db = True
-; load_language = fr_FR
+
+without_demo = all
+
+;; HTTP Service Configuration
+; gevent_port = 8072
+; http_enable = True
+; http_interface =
+; http_port = 8069
+proxy_mode = True
+; x_sendfile = False
+
+;; Web interface Configuration
+; dbfilter =
+
+;; Logging Configuration
 ; log_db = False
+; log_db_level = warning
 ; log_handler = [':INFO']
 ; log_level = info
 ; logfile = None
-; longpolling_port = 8072
-; max_cron_threads = 2
-; osv_memory_age_limit = 1.0
-; osv_memory_count_limit = False
-proxy_mode = True
+; syslog = False
+
+;; SMTP Configuration
+; email_from = False
+; from_filter = False
 ; smtp_password = False
 {% if mailname is defined %}
 ; smtp_port = 25
@@ -42,21 +39,71 @@ smtp_port=1025
 {% endif %}
 smtp_server = smtp
 ; smtp_ssl = False
+; smtp_ssl_certificate_filename = False
+; smtp_ssl_private_key_filename = False
 ; smtp_user = False
+
+;; Database related options
+db_name = {{ odoo_instances[item.value.prod_instance | default(item.key )].db }}
+db_password = {{ odoo_instances[item.value.prod_instance | default(item.key )].db_pass }}
+db_user = {{ odoo_instances[item.value.prod_instance | default(item.key )].db_user }}
+; db_template = template0
+db_host = db
+db_maxconn = {{ odoo_instances[item.value.prod_instance | default(item.key )].odoo_db_maxconn | default(64) }}
+; db_sslmode = prefer
+; pg_path =
+
+;; Security-related options
+; list_db = True
+
+;; Advanced options
+; geoip_database = /usr/share/GeoIP/GeoLite2-City.mmdb
+; osv_memory_count_limit = 0
+; transient_age_limit = 1.0
 unaccent = True
-without_demo = all
-{% if ansible_processor_vcpus > 2 or odoo_prod.force_odoo_workers is defined %}
-workers = {{ (ansible_processor_vcpus * 2 - 1) | int | abs }}
+
+;; Multiprocessing options
+; limit_memory_hard = 2684354560
+; limit_memory_soft = 2147483648
+; limit_request = 65536
+limit_time_cpu = {{ odoo_instances[item.value.prod_instance | default(item.key )].odoo_limit_time_cpu | default(300) }}
+limit_time_real = {{ odoo_instances[item.value.prod_instance | default(item.key )].odoo_limit_time_real | default(600) }}
+; limit_time_real_cron = -1
+{% if ansible_processor_vcpus > 2 or odoo_instances[item.value.prod_instance | default(item.key )].force_odoo_workers is defined %}
 max_cron_threads = {{ ansible_processor_vcpus | int }}
+workers = {{ (ansible_processor_vcpus * 2 - 1) | int | abs }}
 {% else %}
+; max_cron_threads = 2
 ; workers = 0
 {% endif %}
-; xmlrpc = True
-; xmlrpc_interface =
-; xmlrpc_port = 8069
-; xmlrpcs = True
-; xmlrpcs_interface =
-; xmlrpcs_port = 8071
-{% if odoo_extra_conf is defined %}
-{{ odoo_extra_conf }}
+{% if instance_odoo_setup.odoo_version == '12.0' %}
+
+;; Autoinstall options
+modules_auto_install_disabled = account_facturx,mail_bot,web_unsplash{% if odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_disabled is defined %},{{ odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_disabled }}{% endif %}
+
+modules_auto_install_enabled = disable_odoo_online,lefilament_release_agent,mail_debrand,partner_disable_gravatar,partner_firstname,password_security,remove_odoo_enterprise,web_responsive,web_no_bubble{% if odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_enabled is defined %},{{ odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_enabled }}{% endif %}
+
+{% endif %}
+{% if instance_odoo_setup.odoo_version == '14.0' %}
+
+;; Autoinstall options
+modules_auto_install_disabled = account_edi,mail_bot,web_unsplash{% if odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_disabled is defined %},{{ odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_disabled }}{% endif %}
+
+modules_auto_install_enabled = account_move_name_sequence,account_reconcile_show_boolean,account_reconciliation_widget,disable_odoo_online,lefilament_release_agent,mail_debrand,partner_disable_gravatar,partner_firstname,password_security,remove_login_links,remove_odoo_enterprise,web_responsive,web_no_bubble{% if odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_enabled is defined %},{{ odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_enabled }}{% endif %}
+
+{% endif %}
+{% if instance_odoo_setup.odoo_version == '16.0' %}
+
+;; Autoinstall options
+modules_auto_install_disabled = account_edi,google_gmail,mail_bot,web_unsplash{% if odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_disabled is defined %},{{ odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_disabled }}{% endif %}
+
+; to be updated once all modules are available
+modules_auto_install_enabled = account_move_name_sequence,disable_odoo_online,lefilament_release_agent,partner_disable_gravatar,partner_firstname,remove_login_links,remove_odoo_enterprise,web_responsive,web_theme_classic{% if odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_enabled is defined %},{{ odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_enabled }}{% endif %}
+; modules_auto_install_enabled = account_move_name_sequence,account_reconcile_show_boolean,account_reconcile_oca,disable_odoo_online,lefilament_release_agent,mail_debrand,partner_disable_gravatar,partner_firstname,password_security,remove_login_links,remove_odoo_enterprise,web_responsive,web_no_bubble,web_theme_classic{% if odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_enabled is defined %},{{ odoo_instances[item.value.prod_instance | default(item.key )].modules_auto_install_enabled }}{% endif %}
+
+{% endif %}
+{% if odoo_instances[item.value.prod_instance | default(item.key )].odoo_extra_conf is defined %}
+
+;; Extra options
+{{ odoo_instances[item.value.prod_instance | default(item.key )].odoo_extra_conf }}
 {% endif %}

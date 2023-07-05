@@ -1,50 +1,49 @@
 version: "2.1"
 services:
     backup_odoo:
-        image: remifilament/duplicity:postgres # Until https://github.com/Tecnativa/docker-duplicity/pull/324 is merged
-        # image: ghcr.io/tecnativa/docker-duplicity-postgres:master # Once https://github.com/Tecnativa/docker-duplicity/pull/324 is merged
-        hostname: {{ inventory_hostname_short | lower | regex_replace('_','') }}-odoo
+        image: ghcr.io/tecnativa/docker-duplicity-postgres:master
+        hostname: {{ inventory_hostname_short | lower | regex_replace('_','') }}-{{ item.key }}
         environment:
-            DST: "swift://odoo_{{ inventory_hostname|lower }}"
-            PGDATABASE: "{{ odoo_prod.db }}"
-            PGUSER: "{{ odoo_prod.db_user }}"
-            PGPASSWORD: "{{ odoo_prod.db_pass }}"
-            PASSPHRASE: "{{ odoo_backup_pass | default(odoo_prod.master_pass) }}"
-            SWIFT_USERNAME: "{{ swift_odoo_username }}"
-            SWIFT_PASSWORD: "{{ swift_odoo_password }}"
-            SWIFT_AUTHURL: "{{ swift_odoo_authurl }}"
-            SWIFT_AUTHVERSION: {{ swift_odoo_authversion }}
-            SWIFT_TENANTNAME: "{{ swift_odoo_tenantname }}"
-            SWIFT_TENANTID: "{{ swift_odoo_tenantid }}"
-            SWIFT_REGIONNAME: "{{ swift_odoo_regionname }}"
+            DST: "swift://{{ item.key }}_{{ inventory_hostname|lower }}"
+            PGDATABASE: "{{ item.value.db }}"
+            PGUSER: "{{ item.value.db_user }}"
+            PGPASSWORD: "{{ item.value.db_pass }}"
+            PASSPHRASE: "{{ item.value.odoo_backup_pass | default(item.value.master_pass) }}"
+            SWIFT_USERNAME: "{{ account.username }}"
+            SWIFT_PASSWORD: "{{ account.password }}"
+            SWIFT_AUTHURL: "{{ account.authurl }}"
+            SWIFT_AUTHVERSION: {{ account.authversion }}
+            SWIFT_TENANTNAME: "{{ account.tenantname }}"
+            SWIFT_TENANTID: "{{ account.tenantid }}"
+            SWIFT_REGIONNAME: "{{ account.regionname }}"
             JOB_200_WHEN: "never"
             JOB_300_WHAT: "pg_dump --no-owner --format c --file $$SRC/$$PGDATABASE.pgdump && backup --full-if-older-than 6D"
             JOB_302_WHAT: "dup remove-all-but-n-full 5 --force $$DST $$@"
             JOB_302_WHEN: "daily"
         volumes:
-            - odoo_backup_cache:/root/.cache/duplicity/:z
-            - odoo_filestore:/mnt/backup/src/odoo:z
-{% if metabase is defined and metabase %}
-            - odoo_metabase:/mnt/backup/src/metabase:z
+            - {{ item.key }}{{ account_index + 1 }}_backup_cache:/root/.cache/duplicity/:z
+            - {{ item.key }}_filestore:/mnt/backup/src/odoo:z
+{% if item.value.metabase | default(false) %}
+            - {{ item.key }}_metabase:/mnt/backup/src/metabase:z
 {% endif %}
         networks:
-            - odoo_default
+            - {{ item.key }}_default
             - public
         command:
             - /etc/periodic/daily/jobrunner
 
 networks:
-    odoo_default:
+    {{ item.key }}_default:
         external: true
     public:
         driver_opts:
             encrypted: 1
 
 volumes:
-    odoo_backup_cache:
-    odoo_filestore:
+    {{ item.key }}{{ account_index + 1 }}_backup_cache:
+    {{ item.key }}_filestore:
         external: true
-{% if metabase is defined and metabase %}
-    odoo_metabase:
+{% if item.value.metabase | default(false) %}
+    {{ item.key }}_metabase:
         external: true
 {% endif %}

@@ -1,0 +1,7 @@
+---
+warn_list:  # or 'skip_list' to silence them completely
+    - git-latest  # Git checkouts must contain explicit version
+    - ignore-errors  # Use failed_when and specify error conditions instead of using ignore_errors
+    - no-changed-when  # Commands should not change things if nothing needs doing
+    - no-handler  # Tasks that run when changed should likely be handlers
+    - package-latest  # Package installs should not use latest

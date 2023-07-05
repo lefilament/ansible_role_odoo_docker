@@ -1,5 +1,6 @@
 ## Image to get git repos
-FROM lefilament/odoo:{{ odoo_version }}{% if odoo_python36 is defined and odoo_python36 %}_py3.6{% endif %}{% if odoo_multilingual is defined and odoo_multilingual %}_ml{% endif %} as odoo_addons
+{# TODO: make base image a variable #}
+FROM lefilament/odoo:{{ instance_odoo_setup.odoo_version }}{% if item.value.odoo_python36 | default(false) %}_py3.6{% endif %}{% if item.value.odoo_multilingual | default(false) %}_ml{% endif %} as odoo_addons
 LABEL stage=builder
 USER root
 # Install GitLab private keys
@@ -16,15 +17,16 @@ RUN /opt/odoo/private/fetch_repos_addons
 RUN /opt/odoo/private/fetch_repos
 
 ## Final image
-FROM lefilament/odoo:{{ odoo_version }}{% if odoo_python36 is defined and odoo_python36 %}_py3.6{% endif %}{% if odoo_multilingual is defined and odoo_multilingual %}_ml{% endif %} as final
+{# TODO: make base image a variable #}
+FROM lefilament/odoo:{{ instance_odoo_setup.odoo_version }}{% if item.value.odoo_python36 | default(false) %}_py3.6{% endif %}{% if item.value.odoo_multilingual | default(false) %}_ml{% endif %} as final
 USER root
 COPY --from=odoo_addons --chown=odoo:odoo /opt/odoo/private_addons /opt/odoo/private_addons
 COPY --from=odoo_addons --chown=odoo:odoo /opt/odoo/additional_addons /opt/odoo/additional_addons
-{% if odoo_pip_packages is defined %}
+{% if item.value.odoo_pip_packages is defined %}
 # Install pip packages
-RUN pip install {{ odoo_pip_packages }}
+RUN pip install {{ item.value.odoo_pip_packages }}
 {% endif %}
-{{ odoo_specific_dockerfile_commands | default("") }}
+{{ item.value.odoo_specific_dockerfile_commands | default("") }}
 # Copy Odoo configuration file
 COPY --chown=odoo:odoo ./odoo.conf /opt/odoo/etc/odoo.conf
 USER odoo

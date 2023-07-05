@@ -1,0 +1,252 @@
+---
+- name: Create Odoo docker structure on server in /home/docker/{{ item.key }}
+  ansible.builtin.file:
+      name: "/home/docker/{{ item.key }}"
+      state: directory
+      owner: root
+      group: root
+      mode: '0755'
+
+- name: Container building requirements
+  when: item.value.image_instance | default(false) == item.key
+  tags: ['never', 'build_odoo']
+  block:
+      - name: Create Odoo private docker structure on server in /home/docker/{{ item.key }}
+        ansible.builtin.file:
+            name: "/home/docker/{{ item.key }}/odoo/private"
+            state: directory
+            owner: root
+            group: root
+            mode: '0755'
+
+      - name: Copy update scripts to be run during build
+        ansible.builtin.template:
+            src: "{{ file }}"
+            dest: "/home/docker/{{ item.key }}/odoo/private/"
+            owner: root
+            group: root
+            mode: '0750'
+        with_items:
+            - fetch_repos
+            - fetch_repos_addons
+        loop_control:
+            loop_var: file
+        notify:
+            - Pull odoo ML image
+            - Pull odoo Python3.6 image
+            - Pull odoo image
+            - Build odoo image
+
+      - name: Set repos variables from template
+        ansible.builtin.template:
+            src: "{{ file }}.j2"
+            dest: "/home/docker/{{ item.key }}/odoo/private/{{ file }}"
+            owner: root
+            group: root
+            mode: '0644'
+        with_items:
+            - "repos.yaml"
+            - "repos-addons.yaml"
+        loop_control:
+            loop_var: file
+        notify:
+            - Pull odoo ML image
+            - Pull odoo Python3.6 image
+            - Pull odoo image
+            - Build odoo image
+
+      - name: Copy odoo.conf file
+        ansible.builtin.template:
+            src: odoo.conf.j2
+            dest: "/home/docker/{{ item.key }}/odoo/odoo.conf"
+            owner: root
+            group: root
+            mode: '0600'
+        notify: Build odoo image
+
+      - name: Copy private GitLab ssh keys file
+        ansible.builtin.copy:
+            content: "{{ git_modules_privkey | default('') }}"
+            dest: "/home/docker/{{ item.key }}/odoo/id_ed25519.sources"
+            owner: root
+            group: root
+            mode: '0400'
+        notify:
+            - Build odoo image
+            - Remove ssh private keys
+            - Remove intermediate image
+
+      - name: Copy ssh config for connecting to LF Gitlab
+        ansible.builtin.copy:
+            src: ssh_config
+            dest: "/home/docker/{{ item.key }}/odoo/ssh_config"
+            owner: root
+            group: root
+            mode: '0444'
+        notify: Build odoo image
+
+      - name: Copy private Git ssh keys file
+        when: git_private_keys | default(false)
+        ansible.builtin.copy:
+            content: "{{ git_private_keys }}"
+            dest: "/home/docker/{{ item.key }}/odoo/id_rsa"
+            owner: root
+            group: root
+            mode: '0400'
+        notify: Build odoo image
+
+      - name: Copy Dockerfile to retrieve private repos and extra OCA ones
+        ansible.builtin.template:
+            src: Dockerfile.j2
+            dest: "/home/docker/{{ item.key }}/odoo/Dockerfile"
+            owner: root
+            group: root
+            mode: '0644'
+        notify:
+            - Pull odoo ML image
+            - Pull odoo Python3.6 image
+            - Pull odoo image
+            - Build odoo image
+
+- name: Get image from another instance
+  when: item.value.image_instance | default(false) != item.key
+  block:
+      - name: Check if instance image exists
+        community.docker.docker_image_info:
+            name: "filament/{{ item.key }}:{{ instance_odoo_setup.odoo_version }}"
+        register: prod_image
+
+      - name: Copy image from image_instance if it does not exist
+        when: prod_image.images | length == 0
+        community.docker.docker_image:
+            name: "filament/{{ item.value.image_instance }}:{{ instance_odoo_setup.odoo_version }}"
+            repository: "filament/{{ item.key }}:{{ instance_odoo_setup.odoo_version }}"
+            source: local
+
+- name: Copy docker compose service
+  ansible.builtin.template:
+      src: docker-compose.yaml.j2
+      dest: "/home/docker/{{ item.key }}/docker-compose.yml"
+      owner: root
+      group: root
+      mode: '0400'
+  notify: Start odoo container
+
+# --------------------------------------------------
+# non-prod restore section
+# --------------------------------------------------
+- name: Restore backups from another instance
+  when: (item.value.backup_instance | default(item.key) != item.key or item.value.backup_host | default(inventory_hostname) != inventory_hostname) and inventory_hostname in groups.maintenance_contract
+  tags: 'backup_odoo'
+  block:
+      - name: Copy sql script to be run before restoring db from backup_instance
+        ansible.builtin.template:
+            src: pre_restore-odootest.sql.j2
+            dest: "/home/docker/backups/pre_restore-{{ item.key }}.sql"
+            owner: root
+            group: root
+            mode: '0444'
+
+      - name: Copy sql script to be run after restoring db from backup_instance
+        ansible.builtin.template:
+            src: post_restore-odootest.sql.j2
+            dest: "/home/docker/backups/post_restore-{{ item.key }}.sql"
+            owner: root
+            group: root
+            mode: '0444'
+
+      - name: Copy compose file to restore db from backup_instance
+        ansible.builtin.template:
+            src: restore-odootest.yaml.j2
+            dest: "/home/docker/backups/restore-{{ item.key }}{{ account_index + 1 }}.yaml"
+            owner: root
+            group: root
+            mode: '0400'
+        loop: "{{ swift_accounts }}"
+        loop_control:
+            label: "account {{ account_index + 1 }}"
+            index_var: account_index
+            loop_var: account
+
+# --------------------------------------------------
+# prod backup section
+# --------------------------------------------------
+- name: Backup
+  when: item.value.backup_instance | default(false) == item.key and item.value.backup_host | default(inventory_hostname) == inventory_hostname and inventory_hostname in groups.maintenance_contract
+  tags: 'backup_odoo'
+  block:
+      - name: "Copy docker compose for backup account {{ account_index + 1 }}"
+        ansible.builtin.template:
+            src: backup.yaml.j2
+            dest: "/home/docker/backups/backup-{{ item.key }}{{ account_index + 1 }}.yaml"
+            owner: root
+            group: root
+            mode: '0400'
+        loop: "{{ swift_accounts }}"
+        loop_control:
+            label: "account {{ account_index + 1 }}"
+            index_var: account_index
+            loop_var: account
+
+      # TODO: duplicate with swift_accounts
+      - name: "Add cron job to run every day backup account {{ account_index + 1 }}"
+        ansible.builtin.cron:
+            name: "backup {{ item.key }}{{ account_index + 1 }}"
+            minute: "{{ '%H' | strftime((('1970-01-01 ' + backup_time_start) | to_datetime).timestamp() + (swift_accounts | length - (account_index + 1)) * ((backup_time_slot_duration | community.general.to_seconds - swift_accounts | length * backup_time_max_duration | community.general.to_seconds) / (swift_accounts | length - 1) + backup_time_max_duration | community.general.to_seconds) | int) }}"
+            hour: "{{ '%H' | strftime((('1970-01-01 ' + backup_time_start) | to_datetime).timestamp() + (swift_accounts | length - (account_index + 1)) * ((backup_time_slot_duration | community.general.to_seconds - swift_accounts | length * backup_time_max_duration | community.general.to_seconds) / (swift_accounts | length - 1) + backup_time_max_duration | community.general.to_seconds) | int) }}"
+            job: "/usr/bin/docker-compose -f /home/docker/backups/backup-{{ item.key }}{{ account_index + 1 }}.yaml run --rm backup_odoo"
+        loop: "{{ swift_accounts }}"
+        loop_control:
+            label: "account {{ account_index + 1 }}"
+            index_var: account_index
+            loop_var: account
+
+# Flush handlers.
+- name: Set facts
+  ansible.builtin.set_fact:
+      instance: "{{ {'key': item.key, 'value': item.value} }}"
+      instance_odoo_version: "{{ instance_odoo_setup.odoo_version }}"
+      cacheable: false
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+# --------------------------------------------------
+# Postgres Readonly user
+# --------------------------------------------------
+- name: Postgres Read-only user
+  when: item.value.odoo_remote_db_access | default(false)
+  block:
+      - name: Allow readonly user connection to prod db (with userns_remap)
+        when: docker_userns_remap
+        ansible.builtin.blockinfile:
+            path: "/var/lib/docker/{{ dockremap_subuid }}.{{ dockremap_subgid }}/volumes/{{ item.key }}_db/_data/pg_hba.conf"
+            block: |
+                host {{ item.value.db }} {{ odoo_instances[item.value.prod_instance | default(item.key)].db_user }} 172.16.0.0/12 md5
+                host postgres {{ odoo_instances[item.value.prod_instance | default(item.key)].db_user }} 172.16.0.0/12 md5
+                host {{ item.value.db }} {{ item.value.odoo_db_rouser }} all md5
+
+      - name: PROD Allow readonly user connection to prod db (no userns_remap)
+        when: not docker_userns_remap
+        ansible.builtin.blockinfile:
+            path: /var/lib/docker/volumes/{{ item.key }}_db/_data/pg_hba.conf
+            block: |
+                host {{ item.value.db }} {{ odoo_instances[item.value.prod_instance | default(item.key)].db_user }} 172.16.0.0/12 md5
+                host postgres {{ odoo_instances[item.value.prod_instance | default(item.key)].db_user }} 172.16.0.0/12 md5
+                host {{ item.value.db }} {{ item.value.odoo_db_rouser }} all md5
+
+      - name: PROD Disable access all rights (with userns_remap)
+        when: docker_userns_remap
+        ansible.builtin.lineinfile:
+            name: "/var/lib/docker/{{ dockremap_subuid }}.{{ dockremap_subgid }}/volumes/{{ item.key }}_db/_data/pg_hba.conf"
+            regexp: "^host all all all md5"
+            line: "#host all all all md5"
+
+      - name: PROD Disable access all rights (no userns_remap)
+        when: not docker_userns_remap
+        ansible.builtin.lineinfile:
+            name: /var/lib/docker/volumes/{{ item.key }}_db/_data/pg_hba.conf
+            regexp: "^host all all all md5"
+            line: "#host all all all md5"
+
+# TODO: add restart db container

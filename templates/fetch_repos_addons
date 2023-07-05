@@ -1,4 +1,4 @@
-{% if odoo_version == '10.0' %}
+{% if instance_odoo_setup.odoo_version == '10.0' %}
 #!/usr/bin/env python
 {% else %}
 #!/usr/bin/env python3
@@ -9,7 +9,7 @@ import os
 import pwd
 import shutil
 from subprocess import call
-{% if odoo_version == '10.0' %}
+{% if instance_odoo_setup.odoo_version == '10.0' %}
 from urlparse import urlsplit
 {% else %}
 from urllib.parse import urlsplit

@@ -1,23 +1,18 @@
-{% for repo in item.custom_modules | default([]) | sort %}
-{{ repo | basename }}:
-    url: "{{ custom_modules_base_url }}/{{ repo }}.git"
-    branch: "{{ odoo_version }}"
-{% endfor %}
-{% for repo in item.custom_modules_branch | default([]) | sort(attribute='repo') %}
+{% for repo in item.value.custom_modules | default([]) | sort(attribute='repo') %}
 {{ repo.repo | basename }}:
     url: "{{ custom_modules_base_url }}/{{ repo.repo }}.git"
 {% if repo.branch is defined %}
     branch: "{{ repo.branch }}"
 {% else %}
-    branch: "{{ odoo_version }}"
+    branch: "{{ instance_odoo_setup.odoo_version }}"
 {% endif %}
 {% endfor %}
-{% for repo in item.other_repos | default([]) | sort(attribute='repo') %}
+{% for repo in item.value.other_repos | default([]) | sort(attribute='repo') %}
 {{ repo.repo }}:
     url: {{ repo.url }}
 {% if repo.branch is defined %}
     branch: "{{ repo.branch }}"
 {% else %}
-    branch: "{{ odoo_version }}"
+    branch: "{{ instance_odoo_setup.odoo_version }}"
 {% endif %}
 {% endfor %}

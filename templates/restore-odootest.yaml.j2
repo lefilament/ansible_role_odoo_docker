@@ -1,52 +1,43 @@
 version: "2.1"
 services:
     restore_test:
-        image: remifilament/duplicity:postgres # Until https://github.com/Tecnativa/docker-duplicity/pull/324 is merged
-        # image: ghcr.io/tecnativa/docker-duplicity-postgres:master # Once https://github.com/Tecnativa/docker-duplicity/pull/324 is merged
-        hostname: {{ inventory_hostname_short | lower | regex_replace('_','') }}-odoo
+        image: ghcr.io/tecnativa/docker-duplicity-postgres:master
+        hostname: {{ item.value.backup_host | default(inventory_hostname_short) | lower | regex_replace('_','') }}-odoo
         networks:
-            - {{ item.dir }}_default
+            - {{ item.key }}_default
             - public
         volumes:
-            - backups_odoo_backup_cache:/root/.cache/duplicity/:z
-            - {{ item.dir }}_filestore:/mnt/backup/src/odoo:z
-            - ./post_restore-{{ item.name }}.sql:/tmp/post-restore.sql:ro
-            - ./pre_restore-{{ item.name }}.sql:/tmp/pre-restore.sql:ro
+            - backups_{{ item.value.backup_instance }}{{ account_index + 1 }}_backup_cache:/root/.cache/duplicity/:z
+            - {{ item.key }}_filestore:/mnt/backup/src/odoo:z
+            - ./post_restore-{{ item.key }}.sql:/tmp/post-restore.sql:ro
+            - ./pre_restore-{{ item.key }}.sql:/tmp/pre-restore.sql:ro
         environment:
-            PGDATABASE: "{{ item.db }}"
-            SWIFT_USERNAME: "{{ swift_odoo_username }}"
-            SWIFT_PASSWORD: "{{ swift_odoo_password }}"
-            SWIFT_AUTHURL: "{{ swift_odoo_authurl }}"
-            SWIFT_AUTHVERSION: {{ swift_odoo_authversion }}
-            SWIFT_TENANTNAME: "{{ swift_odoo_tenantname }}"
-            SWIFT_TENANTID: "{{ swift_odoo_tenantid }}"
-            SWIFT_REGIONNAME: "{{ swift_odoo_regionname }}"
+            PGDATABASE: "{{ item.value.db }}"
+            SWIFT_USERNAME: "{{ account.username }}"
+            SWIFT_PASSWORD: "{{ account.password }}"
+            SWIFT_AUTHURL: "{{ account.authurl }}"
+            SWIFT_AUTHVERSION: {{ account.authversion }}
+            SWIFT_TENANTNAME: "{{ account.tenantname }}"
+            SWIFT_TENANTID: "{{ account.tenantid }}"
+            SWIFT_REGIONNAME: "{{ account.regionname }}"
             OPTIONS: "--force"
-{% if odoo_prod is defined %}
-            DST: "swift://odoo_{{ inventory_hostname|lower }}"
-            PGUSER: "{{ odoo_prod.db_user }}"
-            PGPASSWORD: "{{ odoo_prod.db_pass }}"
-            PASSPHRASE: "{{ odoo_backup_pass | default(odoo_prod.master_pass) }}"
-        command: [sh, -c, "psql -a -f /tmp/pre-restore.sql postgres ; echo 'remove existing dir' && rm -rf /mnt/backup/src/odoo/filestore/$$PGDATABASE && restore && echo 'move repo to final dest' && mv /mnt/backup/src/odoo/filestore/{{ odoo_prod.db }} /mnt/backup/src/odoo/filestore/$$PGDATABASE && echo 'create database' && createdb -T template0 $$PGDATABASE && echo 'restore database' && pg_restore -d $$PGDATABASE $$SRC/{{ odoo_prod.db }}.pgdump ; psql -a -f /tmp/post-restore.sql $$PGDATABASE"]
-{% else %}
-            DST: "swift://odoo_{{ item.prod_inv_name|lower }}"
-            PGUSER: "{{ item.db_user }}"
-            PGPASSWORD: "{{ item.db_pass }}"
-            PASSPHRASE: "{{ hostvars[item.prod_inv_name].odoo_backup_pass | default(hostvars[item.prod_inv_name].odoo_prod.master_pass) }}"
-        command: [sh, -c, "psql -a -f /tmp/pre-restore.sql postgres ; echo 'remove existing dir' && rm -rf /mnt/backup/src/odoo/filestore/$$PGDATABASE && restore && echo 'move repo to final dest' && mv /mnt/backup/src/odoo/filestore/{{ hostvars[item.prod_inv_name].odoo_prod.db }} /mnt/backup/src/odoo/filestore/$$PGDATABASE && echo 'create database' && createdb -T template0 $$PGDATABASE && echo 'restore database' && pg_restore -d $$PGDATABASE $$SRC/{{ hostvars[item.prod_inv_name].odoo_prod.db }}.pgdump ; psql -a -f /tmp/post-restore.sql $$PGDATABASE"]
-{% endif %}
+            DST: "swift://{{ item.value.backup_instance }}_{{ item.value.backup_host | default(inventory_hostname) | lower }}"
+            PGUSER: "{{ odoo_instances[item.value.prod_instance | default(item.key )].db_user }}"
+            PGPASSWORD: "{{ odoo_instances[item.value.prod_instance | default(item.key )].db_pass }}"
+            PASSPHRASE: "{{ hostvars[item.value.backup_host | default(inventory_hostname)]['odoo_instances'][item.value.backup_instance].odoo_backup_pass | default(hostvars[item.value.backup_host | default(inventory_hostname)]['odoo_instances'][item.value.backup_instance].master_pass) }}"
+        command: [sh, -c, "psql -a -f /tmp/pre-restore.sql postgres ; echo 'remove existing dir' && rm -rf /mnt/backup/src/odoo/filestore/$$PGDATABASE && restore && echo 'move repo to final dest' && mv /mnt/backup/src/odoo/filestore/{{ hostvars[item.value.backup_host | default(inventory_hostname)]['odoo_instances'][item.value.backup_instance].db }} /mnt/backup/src/odoo/filestore/$$PGDATABASE && echo 'create database' && createdb -T template0 $$PGDATABASE && echo 'restore database' && pg_restore -d $$PGDATABASE $$SRC/{{ hostvars[item.value.backup_host | default(inventory_hostname)]['odoo_instances'][item.value.backup_instance].db }}.pgdump ; psql -a -f /tmp/post-restore.sql $$PGDATABASE"]
 
 networks:
-    {{ item.dir }}_default:
+    {{ item.key }}_default:
         external: true
     public:
         driver_opts:
             encrypted: 1
 
 volumes:
-    backups_odoo_backup_cache:
-{% if odoo_prod is defined %}
+    backups_{{ item.value.backup_instance }}{{ account_index + 1 }}_backup_cache:
+{% if item.value.backup_host | default(inventory_hostname) == inventory_hostname %}
         external: true
 {% endif %}
-    {{ item.dir }}_filestore:
+    {{ item.key }}_filestore:
         external: true
