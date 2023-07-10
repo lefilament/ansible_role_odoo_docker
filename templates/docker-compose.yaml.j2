@@ -21,7 +21,7 @@ services:
         volumes:
             - filestore:/opt/odoo/data:z
 {# if prod and banking #}
-{% if item.value.prod_instance | default(false) == item.key and banking %}
+{% if item.value.prod_instance | default(false) == item.key and banking | default(false) %}
             - ./bank/:/ofx/:ro
 {% endif %}
 {% if private_pull is defined %}
